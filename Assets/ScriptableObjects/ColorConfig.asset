@@ -25,3 +25,7 @@ MonoBehaviour:
     renderColor: {r: 1, g: 0.4117647, b: 0.7058824, a: 1}
   - stickmanColor: 5
     renderColor: {r: 1, g: 0.54901963, b: 0, a: 1}
+  - stickmanColor: 6
+    renderColor: {r: 0, g: 1, b: 0.9827192, a: 1}
+  - stickmanColor: 7
+    renderColor: {r: 0.5377358, g: 0.32828024, b: 0, a: 1}
