@@ -32,6 +32,7 @@ public class LevelEditorInspector : Editor
         editor.stickmanPrefab = (GameObject)EditorGUILayout.ObjectField("Stickman Prefab", editor.stickmanPrefab, typeof(GameObject), false);
         editor.busPrefab = (GameObject)EditorGUILayout.ObjectField("Bus Prefab", editor.busPrefab, typeof(GameObject), false);
         editor.wallPrefab = (GameObject)EditorGUILayout.ObjectField("Wall Prefab", editor.wallPrefab, typeof(GameObject), false);
+        editor.spawnerPrefab = (GameObject)EditorGUILayout.ObjectField("Spawner Prefab", editor.spawnerPrefab, typeof(GameObject), false);
         editor.gridParent = (Transform)EditorGUILayout.ObjectField("Grid Parent", editor.gridParent, typeof(Transform), true);
         editor.busSpawnOrigin = (Transform)EditorGUILayout.ObjectField("Bus Spawn Origin", editor.busSpawnOrigin, typeof(Transform), true);
 
@@ -91,21 +92,39 @@ public class LevelEditorInspector : Editor
             style.fontStyle = FontStyle.Bold;
             style.border = new RectOffset(0, 0, 0, 0);
 
-            string label = isSelected && !editor.pathMode ? $"[{c}]" : c.ToString();
+            string label = isSelected && !editor.pathMode && !editor.spawnerMode ? $"[{c}]" : c.ToString();
             if (GUILayout.Button(label, style, GUILayout.Height(30)))
             {
                 editor.selectedColor = c;
                 editor.pathMode = false;
+                editor.spawnerMode = false;
             }
         }
         EditorGUILayout.EndHorizontal();
 
-        // Path mode toggle
+        // Mode toggles
+        EditorGUILayout.BeginHorizontal();
+
         var pathBg = GUI.backgroundColor;
         GUI.backgroundColor = editor.pathMode ? Color.cyan : Color.grey;
         if (GUILayout.Button(editor.pathMode ? "[Path Mode]" : "Path Mode", GUILayout.Height(25)))
+        {
             editor.pathMode = !editor.pathMode;
+            if (editor.pathMode) editor.spawnerMode = false;
+        }
+
+        GUI.backgroundColor = editor.spawnerMode ? Color.magenta : Color.grey;
+        if (GUILayout.Button(editor.spawnerMode ? "[Spawner Mode]" : "Spawner Mode", GUILayout.Height(25)))
+        {
+            editor.spawnerMode = !editor.spawnerMode;
+            if (editor.spawnerMode) editor.pathMode = false;
+        }
         GUI.backgroundColor = pathBg;
+
+        EditorGUILayout.EndHorizontal();
+
+        if (editor.spawnerMode)
+            EditorGUILayout.HelpBox("Click empty cell to place spawner. Click existing spawner to select it.", MessageType.None);
 
         EditorGUILayout.Space(5);
 
@@ -122,6 +141,8 @@ public class LevelEditorInspector : Editor
         EditorGUILayout.Space(5);
 
         DrawGrid(editor, levelData);
+
+        DrawSelectedSpawner(editor, levelData);
 
         EditorGUILayout.Space(15);
 
@@ -140,7 +161,8 @@ public class LevelEditorInspector : Editor
 
     private void DrawValidation(LevelData levelData, LevelEditor editor)
     {
-        int stickmanCount = levelData.stickmanPlacements != null ? levelData.stickmanPlacements.Length : 0;
+        int placedCount = levelData.stickmanPlacements != null ? levelData.stickmanPlacements.Length : 0;
+        int spawnerQueueCount = 0;
         int busCount = levelData.busSequence != null ? levelData.busSequence.Length : 0;
         int totalBusCapacity = 0;
 
@@ -148,7 +170,7 @@ public class LevelEditorInspector : Editor
             for (int i = 0; i < levelData.busSequence.Length; i++)
                 totalBusCapacity += levelData.busSequence[i].capacity;
 
-        // Count stickmen per color
+        // Count stickmen per color (placed + spawner queues)
         var colorCounts = new Dictionary<StickmanColor, int>();
         if (levelData.stickmanPlacements != null)
         {
@@ -159,6 +181,23 @@ public class LevelEditorInspector : Editor
                 colorCounts[c]++;
             }
         }
+
+        if (levelData.spawnerPlacements != null)
+        {
+            for (int i = 0; i < levelData.spawnerPlacements.Length; i++)
+            {
+                if (levelData.spawnerPlacements[i].colorQueue == null) continue;
+                spawnerQueueCount += levelData.spawnerPlacements[i].colorQueue.Length;
+                for (int q = 0; q < levelData.spawnerPlacements[i].colorQueue.Length; q++)
+                {
+                    var c = levelData.spawnerPlacements[i].colorQueue[q];
+                    if (!colorCounts.ContainsKey(c)) colorCounts[c] = 0;
+                    colorCounts[c]++;
+                }
+            }
+        }
+
+        int stickmanCount = placedCount + spawnerQueueCount;
 
         // Count bus capacity per color
         var busCapacityPerColor = new Dictionary<StickmanColor, int>();
@@ -288,45 +327,84 @@ public class LevelEditorInspector : Editor
             {
                 var existing = levelData.GetColorAt(r, c);
                 bool isPath = levelData.IsCellActive(r, c);
+                bool hasSpawner = levelData.HasSpawnerAt(r, c);
                 var rect = GUILayoutUtility.GetRect(30, 30, GUILayout.Width(30));
 
                 Color cellColor;
-                if (existing.HasValue)
+                string cellLabel = "";
+
+                if (hasSpawner)
+                {
+                    cellColor = new Color(0.5f, 0.2f, 0.5f);
+                    var sp = levelData.GetSpawnerAt(r, c).Value;
+                    string arrow = sp.direction switch
+                    {
+                        SpawnerDirection.Up => "\u2191",
+                        SpawnerDirection.Down => "\u2193",
+                        SpawnerDirection.Left => "\u2190",
+                        SpawnerDirection.Right => "\u2192",
+                        _ => "S"
+                    };
+                    int qCount = sp.colorQueue != null ? sp.colorQueue.Length : 0;
+                    cellLabel = $"{arrow}{qCount}";
+                }
+                else if (existing.HasValue)
                     cellColor = GetColor(editor, existing.Value);
                 else if (isPath)
                     cellColor = new Color(0.6f, 0.6f, 0.6f);
                 else
                     cellColor = new Color(0.25f, 0.25f, 0.25f);
 
+                if (!hasSpawner)
+                    cellLabel = existing.HasValue ? existing.Value.ToString()[0].ToString() : (isPath ? "\u00b7" : "");
+
                 EditorGUI.DrawRect(rect, cellColor);
 
-                // Border
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1), Color.black);
                 EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1, rect.width, 1), Color.black);
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, 1, rect.height), Color.black);
                 EditorGUI.DrawRect(new Rect(rect.xMax - 1, rect.y, 1, rect.height), Color.black);
 
-                string label = existing.HasValue ? existing.Value.ToString()[0].ToString() : (isPath ? "·" : "");
                 var style = new GUIStyle(EditorStyles.miniLabel);
                 style.alignment = TextAnchor.MiddleCenter;
                 style.normal.textColor = Color.white;
-                style.fontSize = isPath && !existing.HasValue ? 16 : 10;
-                GUI.Label(rect, label, style);
+                style.fontSize = hasSpawner ? 9 : (isPath && !existing.HasValue ? 16 : 10);
+                GUI.Label(rect, cellLabel, style);
 
                 if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
                 {
                     Undo.RecordObject(levelData, "Edit Grid Cell");
 
-                    if (editor.pathMode)
+                    if (editor.spawnerMode)
                     {
-                        bool wasActive = levelData.IsCellActive(r, c);
-                        editor.TogglePathCell(r, c);
-
-                        if (wasActive && existing.HasValue)
+                        if (hasSpawner)
                         {
-                            RemovePlacement(levelData, r, c);
-                            editor.RemoveVisual(r, c);
+                            editor.selectedSpawnerCell = new Vector2Int(r, c);
                         }
+                        else if (!existing.HasValue)
+                        {
+                            editor.PlaceSpawner(r, c, SpawnerDirection.Up, new StickmanColor[0]);
+                            editor.selectedSpawnerCell = new Vector2Int(r, c);
+                        }
+                    }
+                    else if (editor.pathMode)
+                    {
+                        if (hasSpawner) { /* can't toggle path on spawner cell */ }
+                        else
+                        {
+                            bool wasActive = levelData.IsCellActive(r, c);
+                            editor.TogglePathCell(r, c);
+
+                            if (wasActive && existing.HasValue)
+                            {
+                                RemovePlacement(levelData, r, c);
+                                editor.RemoveVisual(r, c);
+                            }
+                        }
+                    }
+                    else if (hasSpawner)
+                    {
+                        /* can't place stickman on spawner cell */
                     }
                     else if (existing.HasValue && existing.Value == editor.selectedColor)
                     {
@@ -345,6 +423,102 @@ public class LevelEditorInspector : Editor
 
             GUILayout.FlexibleSpace();
             EditorGUILayout.EndHorizontal();
+        }
+    }
+
+    private void DrawSelectedSpawner(LevelEditor editor, LevelData levelData)
+    {
+        var sel = editor.selectedSpawnerCell;
+        if (sel.x < 0 || levelData == null) return;
+
+        var spawner = levelData.GetSpawnerAt(sel.x, sel.y);
+        if (!spawner.HasValue) { editor.selectedSpawnerCell = new Vector2Int(-1, -1); return; }
+
+        var sp = spawner.Value;
+
+        EditorGUILayout.Space(10);
+        EditorGUILayout.LabelField($"Spawner [{sel.x},{sel.y}]", EditorStyles.boldLabel);
+
+        // Direction
+        var newDir = (SpawnerDirection)EditorGUILayout.EnumPopup("Direction", sp.direction);
+        bool changed = newDir != sp.direction;
+        sp.direction = newDir;
+
+        // Color queue
+        EditorGUILayout.LabelField("Stickman Queue:");
+        var queue = new List<StickmanColor>(sp.colorQueue ?? new StickmanColor[0]);
+
+        EditorGUILayout.BeginHorizontal();
+        for (int q = 0; q < queue.Count; q++)
+        {
+            var qColor = GetColor(editor, queue[q]);
+            var qRect = GUILayoutUtility.GetRect(24, 24, GUILayout.Width(24));
+            EditorGUI.DrawRect(qRect, qColor);
+            EditorGUI.DrawRect(new Rect(qRect.x, qRect.y, qRect.width, 1), Color.black);
+            EditorGUI.DrawRect(new Rect(qRect.x, qRect.yMax - 1, qRect.width, 1), Color.black);
+            EditorGUI.DrawRect(new Rect(qRect.x, qRect.y, 1, qRect.height), Color.black);
+            EditorGUI.DrawRect(new Rect(qRect.xMax - 1, qRect.y, 1, qRect.height), Color.black);
+
+            var xStyle = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.MiddleCenter };
+            xStyle.normal.textColor = Color.white;
+            if (GUI.Button(qRect, "x", xStyle))
+            {
+                queue.RemoveAt(q);
+                changed = true;
+                break;
+            }
+        }
+        if (queue.Count == 0)
+            EditorGUILayout.LabelField("(empty)", EditorStyles.miniLabel);
+        GUILayout.FlexibleSpace();
+        EditorGUILayout.EndHorizontal();
+
+        // Add color buttons
+        EditorGUILayout.BeginHorizontal();
+        foreach (StickmanColor c in System.Enum.GetValues(typeof(StickmanColor)))
+        {
+            var btnColor = GetColor(editor, c);
+            var tex = new Texture2D(1, 1);
+            tex.SetPixel(0, 0, btnColor);
+            tex.Apply();
+
+            var btnStyle = new GUIStyle(GUI.skin.button);
+            btnStyle.normal.background = tex;
+            btnStyle.hover.background = tex;
+            btnStyle.active.background = tex;
+            btnStyle.normal.textColor = Color.black;
+            btnStyle.fontStyle = FontStyle.Bold;
+            btnStyle.border = new RectOffset(0, 0, 0, 0);
+
+            if (GUILayout.Button("+", btnStyle, GUILayout.Height(22), GUILayout.Width(30)))
+            {
+                queue.Add(c);
+                changed = true;
+            }
+        }
+        EditorGUILayout.EndHorizontal();
+
+        // Delete spawner
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Clear Queue"))
+        {
+            queue.Clear();
+            changed = true;
+        }
+        GUI.backgroundColor = new Color(0.8f, 0.3f, 0.3f);
+        if (GUILayout.Button("Delete Spawner", GUILayout.Width(120)))
+        {
+            editor.RemoveSpawner(sel.x, sel.y);
+            editor.selectedSpawnerCell = new Vector2Int(-1, -1);
+            return;
+        }
+        GUI.backgroundColor = Color.white;
+        EditorGUILayout.EndHorizontal();
+
+        if (changed)
+        {
+            editor.UpdateSpawner(sel.x, sel.y, sp.direction, queue.ToArray());
+            EditorUtility.SetDirty(levelData);
         }
     }
 

@@ -12,4 +12,7 @@ public class GameConfig : ScriptableObject
 
     [Header("Wall")]
     public float wallYOffset = -0.5f;
+
+    [Header("Spawner")]
+    public float spawnerYOffset = 0f;
 }

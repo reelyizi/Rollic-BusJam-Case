@@ -16,3 +16,4 @@ MonoBehaviour:
   startingLevel: 1
   busGap: 19
   wallYOffset: -0.4
+  spawnerYOffset: -1

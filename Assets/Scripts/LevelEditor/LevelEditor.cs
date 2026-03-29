@@ -15,17 +15,21 @@ public class LevelEditor : MonoBehaviour
     public GameObject stickmanPrefab;
     public GameObject busPrefab;
     public GameObject wallPrefab;
+    public GameObject spawnerPrefab;
     public Transform gridParent;
     public Transform busSpawnOrigin;
     public GameConfig gameConfig;
 
     [HideInInspector] public StickmanColor selectedColor = StickmanColor.Red;
     [HideInInspector] public bool pathMode;
+    [HideInInspector] public bool spawnerMode;
+    [HideInInspector] public Vector2Int selectedSpawnerCell = new(-1, -1);
     [HideInInspector] public LevelData editData;
 
     private Transform[] gridCells;
     private readonly Dictionary<Vector2Int, GameObject> spawnedVisuals = new();
     private readonly Dictionary<Vector2Int, GameObject> spawnedWalls = new();
+    private readonly Dictionary<Vector2Int, GameObject> spawnedSpawners = new();
     private readonly List<GameObject> spawnedBuses = new();
 
     public void LoadLevel()
@@ -78,6 +82,18 @@ public class LevelEditor : MonoBehaviour
             System.Array.Copy(from.activeCells, to.activeCells, from.activeCells.Length);
         }
         else to.activeCells = null;
+
+        if (from.spawnerPlacements != null)
+        {
+            to.spawnerPlacements = new SpawnerPlacement[from.spawnerPlacements.Length];
+            for (int i = 0; i < from.spawnerPlacements.Length; i++)
+            {
+                to.spawnerPlacements[i] = from.spawnerPlacements[i];
+                if (from.spawnerPlacements[i].colorQueue != null)
+                    to.spawnerPlacements[i].colorQueue = (StickmanColor[])from.spawnerPlacements[i].colorQueue.Clone();
+            }
+        }
+        else to.spawnerPlacements = null;
     }
 
     public void CacheGridCells()
@@ -107,8 +123,8 @@ public class LevelEditor : MonoBehaviour
 
         if (editData == null) return;
 
-        // First mark active cells
         bool[,] active = new bool[GridRows, GridCols];
+
         if (editData.activeCells != null)
         {
             for (int i = 0; i < editData.activeCells.Length; i++)
@@ -129,7 +145,16 @@ public class LevelEditor : MonoBehaviour
             }
         }
 
-        // Spawn walls on inactive cells
+        if (editData.spawnerPlacements != null)
+        {
+            for (int i = 0; i < editData.spawnerPlacements.Length; i++)
+            {
+                var s = editData.spawnerPlacements[i];
+                active[s.row, s.col] = true;
+                SpawnSpawnerVisual(s.row, s.col, s.direction);
+            }
+        }
+
         for (int r = 0; r < GridRows; r++)
             for (int c = 0; c < GridCols; c++)
                 if (!active[r, c])
@@ -162,10 +187,64 @@ public class LevelEditor : MonoBehaviour
         editData.activeCells = list.ToArray();
     }
 
+    public void PlaceSpawner(int row, int col, SpawnerDirection direction, StickmanColor[] colorQueue)
+    {
+        if (editData == null) return;
+
+        var list = new List<SpawnerPlacement>(editData.spawnerPlacements ?? new SpawnerPlacement[0]);
+        list.RemoveAll(s => s.row == row && s.col == col);
+        list.Add(new SpawnerPlacement
+        {
+            row = row,
+            col = col,
+            direction = direction,
+            colorQueue = colorQueue
+        });
+        editData.spawnerPlacements = list.ToArray();
+
+        SetCellActive(row, col, true);
+        RemoveWall(row, col);
+        SpawnSpawnerVisual(row, col, direction);
+    }
+
+    public void UpdateSpawner(int row, int col, SpawnerDirection direction, StickmanColor[] colorQueue)
+    {
+        if (editData == null) return;
+
+        var list = new List<SpawnerPlacement>(editData.spawnerPlacements ?? new SpawnerPlacement[0]);
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i].row == row && list[i].col == col)
+            {
+                var updated = list[i];
+                updated.direction = direction;
+                updated.colorQueue = colorQueue;
+                list[i] = updated;
+                break;
+            }
+        }
+        editData.spawnerPlacements = list.ToArray();
+        SpawnSpawnerVisual(row, col, direction);
+    }
+
+    public void RemoveSpawner(int row, int col)
+    {
+        if (editData == null) return;
+
+        var list = new List<SpawnerPlacement>(editData.spawnerPlacements ?? new SpawnerPlacement[0]);
+        list.RemoveAll(s => s.row == row && s.col == col);
+        editData.spawnerPlacements = list.ToArray();
+
+        RemoveSpawnerVisual(row, col);
+        SetCellActive(row, col, false);
+        SpawnWall(row, col);
+    }
+
     public void ClearScene()
     {
         spawnedVisuals.Clear();
         spawnedWalls.Clear();
+        spawnedSpawners.Clear();
         ClearBuses();
 
         for (int i = transform.childCount - 1; i >= 0; i--)
@@ -236,6 +315,57 @@ public class LevelEditor : MonoBehaviour
 
         spawnedVisuals.Remove(key);
         SetCellActive(row, col, false);
+        SpawnWall(row, col);
+    }
+
+    public void SpawnSpawnerVisual(int row, int col, SpawnerDirection direction)
+    {
+        var key = new Vector2Int(row, col);
+        RemoveSpawnerVisual(row, col);
+
+        SetCellActive(row, col, true);
+        RemoveWall(row, col);
+        Vector3 pos = GetCellPosition(row, col);
+        float yOffset = gameConfig != null ? gameConfig.spawnerYOffset : 0f;
+        pos.y += yOffset;
+        float yRot = LevelData.GetDirectionYRotation(direction);
+        GameObject obj;
+
+        if (spawnerPrefab != null)
+        {
+#if UNITY_EDITOR
+            obj = (GameObject)UnityEditor.PrefabUtility.InstantiatePrefab(spawnerPrefab, transform);
+#else
+            obj = Instantiate(spawnerPrefab, transform);
+#endif
+            obj.transform.position = pos;
+            obj.transform.rotation = Quaternion.Euler(0f, yRot, 0f);
+        }
+        else
+        {
+            obj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            obj.transform.SetParent(transform);
+            obj.transform.position = pos;
+            obj.transform.rotation = Quaternion.Euler(0f, yRot, 0f);
+            obj.transform.localScale = new Vector3(0.6f, 0.6f, 0.6f);
+
+            var arrowObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            arrowObj.transform.SetParent(obj.transform);
+            arrowObj.transform.localPosition = new Vector3(0f, 0.3f, 0.5f);
+            arrowObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.5f);
+        }
+
+        obj.name = $"Spawner_{row}_{col}_{direction}";
+        obj.hideFlags = HideFlags.DontSave;
+        spawnedSpawners[key] = obj;
+    }
+
+    private void RemoveSpawnerVisual(int row, int col)
+    {
+        var key = new Vector2Int(row, col);
+        if (spawnedSpawners.TryGetValue(key, out var obj) && obj != null)
+            DestroyImmediate(obj);
+        spawnedSpawners.Remove(key);
     }
 
     private Vector3 GetCellSize()
@@ -292,6 +422,14 @@ public class LevelEditor : MonoBehaviour
         if (spawnedWalls.TryGetValue(key, out var obj) && obj != null)
             DestroyImmediate(obj);
         spawnedWalls.Remove(key);
+
+        // Fallback: find by name in case dictionary lost track
+        string wallName = $"Wall_{row}_{col}";
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            if (transform.GetChild(i).name == wallName)
+                DestroyImmediate(transform.GetChild(i).gameObject);
+        }
     }
 
     private void SetCellActive(int row, int col, bool active)

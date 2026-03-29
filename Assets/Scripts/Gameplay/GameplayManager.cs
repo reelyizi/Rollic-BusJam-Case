@@ -147,7 +147,7 @@ public class GameplayManager : MonoBehaviour
 
     private void CheckWinCondition()
     {
-        if (gridManager.StickmanCount() == 0 && busStop.IsEmpty())
+        if (gridManager.StickmanCount() == 0 && busStop.IsEmpty() && gridManager.AllSpawnersExhausted())
         {
             OnWin();
         }

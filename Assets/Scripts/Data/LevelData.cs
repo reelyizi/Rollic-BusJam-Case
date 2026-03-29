@@ -11,6 +11,7 @@ public class LevelData : ScriptableObject
     public int gridCols = 8;
     public StickmanPlacement[] stickmanPlacements;
     public GridCell[] activeCells;
+    public SpawnerPlacement[] spawnerPlacements;
 
     [Header("Bus Stop")]
     public int busStopSlotCount = 6;
@@ -46,6 +47,54 @@ public class LevelData : ScriptableObject
         }
         return false;
     }
+
+    public bool HasSpawnerAt(int row, int col)
+    {
+        if (spawnerPlacements == null) return false;
+
+        for (int i = 0; i < spawnerPlacements.Length; i++)
+        {
+            if (spawnerPlacements[i].row == row && spawnerPlacements[i].col == col)
+                return true;
+        }
+        return false;
+    }
+
+    public SpawnerPlacement? GetSpawnerAt(int row, int col)
+    {
+        if (spawnerPlacements == null) return null;
+
+        for (int i = 0; i < spawnerPlacements.Length; i++)
+        {
+            if (spawnerPlacements[i].row == row && spawnerPlacements[i].col == col)
+                return spawnerPlacements[i];
+        }
+        return null;
+    }
+
+    public static Vector2Int GetDirectionOffset(SpawnerDirection dir)
+    {
+        return dir switch
+        {
+            SpawnerDirection.Up => new Vector2Int(-1, 0),
+            SpawnerDirection.Down => new Vector2Int(1, 0),
+            SpawnerDirection.Left => new Vector2Int(0, -1),
+            SpawnerDirection.Right => new Vector2Int(0, 1),
+            _ => Vector2Int.zero
+        };
+    }
+
+    public static float GetDirectionYRotation(SpawnerDirection dir)
+    {
+        return dir switch
+        {
+            SpawnerDirection.Up => 0f,
+            SpawnerDirection.Right => 90f,
+            SpawnerDirection.Down => 180f,
+            SpawnerDirection.Left => 270f,
+            _ => 0f
+        };
+    }
 }
 
 [Serializable]
@@ -68,4 +117,21 @@ public struct BusDefinition
 {
     public StickmanColor color;
     public int capacity;
+}
+
+public enum SpawnerDirection
+{
+    Up,
+    Down,
+    Left,
+    Right
+}
+
+[Serializable]
+public struct SpawnerPlacement
+{
+    public int row;
+    public int col;
+    public SpawnerDirection direction;
+    public StickmanColor[] colorQueue;
 }

@@ -254,11 +254,16 @@ MonoBehaviour:
     type: 3}
   wallPrefab: {fileID: 414763764186074520, guid: b1b4c6ba563885b42a9b0c4cebf7516e,
     type: 3}
+  spawnerPrefab: {fileID: 3978242366480641594, guid: b34cb872b20f420458d240b94555e061,
+    type: 3}
   gridParent: {fileID: 1310941741}
   busSpawnOrigin: {fileID: 666142512}
   gameConfig: {fileID: 11400000, guid: ad04df99cf9f60440ad43e2d40d3492b, type: 2}
-  selectedColor: 3
+  selectedColor: 2
   pathMode: 0
+  spawnerMode: 1
+  selectedDirection: 2
+  selectedSpawnerQueue: 
   editData: {fileID: 1812448709}
 --- !u!4 &35854861
 Transform:
@@ -5868,6 +5873,11 @@ MonoBehaviour:
     col: 6
   - row: 1
     col: 6
+  spawnerPlacements:
+  - row: 1
+    col: 6
+    direction: 2
+    colorQueue: 
   busStopSlotCount: 6
   busSequence:
   - color: 1

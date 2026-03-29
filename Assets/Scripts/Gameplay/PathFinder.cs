@@ -133,5 +133,18 @@ public static class PathFinder
                 }
             }
         }
+
+        if (levelData.spawnerPlacements != null)
+        {
+            for (int i = 0; i < levelData.spawnerPlacements.Length; i++)
+            {
+                var s = levelData.spawnerPlacements[i];
+                if (s.row >= 0 && s.row < rows && s.col >= 0 && s.col < cols)
+                {
+                    walkable[s.row, s.col] = false;
+                    occupied[s.row, s.col] = true;
+                }
+            }
+        }
     }
 }
