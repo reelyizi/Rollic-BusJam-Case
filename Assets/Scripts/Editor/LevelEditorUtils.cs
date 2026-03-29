@@ -21,19 +21,19 @@ public static class LevelEditorUtils
         return FallbackColors.TryGetValue(c, out var col) ? col : Color.white;
     }
 
-    public static void SetPlacement(LevelData levelData, int row, int col, StickmanColor color)
+    public static void SetPlacement(LevelData levelData, int row, int col, StickmanColor color, bool isHidden = false)
     {
         var list = new List<StickmanPlacement>(levelData.stickmanPlacements ?? new StickmanPlacement[0]);
         for (int i = 0; i < list.Count; i++)
         {
             if (list[i].row == row && list[i].col == col)
             {
-                list[i] = new StickmanPlacement { row = row, col = col, color = color };
+                list[i] = new StickmanPlacement { row = row, col = col, color = color, isHidden = isHidden };
                 levelData.stickmanPlacements = list.ToArray();
                 return;
             }
         }
-        list.Add(new StickmanPlacement { row = row, col = col, color = color });
+        list.Add(new StickmanPlacement { row = row, col = col, color = color, isHidden = isHidden });
         levelData.stickmanPlacements = list.ToArray();
     }
 

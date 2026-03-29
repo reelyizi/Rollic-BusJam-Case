@@ -48,6 +48,18 @@ public class LevelData : ScriptableObject
         return false;
     }
 
+    public bool IsStickmanHidden(int row, int col)
+    {
+        if (stickmanPlacements == null) return false;
+
+        for (int i = 0; i < stickmanPlacements.Length; i++)
+        {
+            if (stickmanPlacements[i].row == row && stickmanPlacements[i].col == col)
+                return stickmanPlacements[i].isHidden;
+        }
+        return false;
+    }
+
     public bool HasSpawnerAt(int row, int col)
     {
         if (spawnerPlacements == null) return false;
@@ -103,6 +115,7 @@ public struct StickmanPlacement
     public int row;
     public int col;
     public StickmanColor color;
+    public bool isHidden;
 }
 
 [Serializable]

@@ -17,3 +17,4 @@ MonoBehaviour:
   busGap: 19
   wallYOffset: -0.4
   spawnerYOffset: -1
+  hiddenStickmanColor: {r: 0.16037738, g: 0.16037738, b: 0.16037738, a: 1}

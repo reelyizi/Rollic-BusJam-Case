@@ -163,8 +163,16 @@ public class LevelEditorInspector : Editor
         GUI.backgroundColor = prevBg;
         EditorGUILayout.EndHorizontal();
 
+        // Hidden mode toggle
+        bool prevHidden = editor.hiddenMode;
+        editor.hiddenMode = EditorGUILayout.Toggle("Hidden Stickman Mode", editor.hiddenMode);
+        if (editor.hiddenMode != prevHidden)
+            editor.Visuals.UpdateHiddenStickmen();
+
         if (editor.spawnerMode)
             EditorGUILayout.HelpBox("Click empty cell to place spawner. Click existing spawner to select it.", MessageType.None);
+        if (editor.hiddenMode)
+            EditorGUILayout.HelpBox("Placed stickmen will be hidden (black) until their path opens.", MessageType.None);
     }
 
     private void DrawGridControls(LevelEditor editor, LevelData levelData)

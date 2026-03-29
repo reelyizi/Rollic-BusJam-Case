@@ -19,30 +19,39 @@ MonoBehaviour:
   - row: 0
     col: 3
     color: 1
+    isHidden: 0
   - row: 1
     col: 3
     color: 2
+    isHidden: 0
   - row: 0
     col: 2
     color: 1
+    isHidden: 0
   - row: 2
     col: 2
     color: 1
-  - row: 2
-    col: 3
-    color: 0
+    isHidden: 0
   - row: 1
     col: 4
     color: 2
+    isHidden: 0
   - row: 2
     col: 5
     color: 2
+    isHidden: 0
   - row: 3
     col: 5
     color: 0
+    isHidden: 0
   - row: 2
     col: 7
     color: 4
+    isHidden: 0
+  - row: 2
+    col: 3
+    color: 0
+    isHidden: 1
   activeCells:
   - row: 2
     col: 2

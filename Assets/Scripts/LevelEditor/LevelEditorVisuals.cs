@@ -55,7 +55,7 @@ public class LevelEditorVisuals
             {
                 var p = data.stickmanPlacements[i];
                 active[p.row, p.col] = true;
-                SpawnStickman(p.row, p.col, p.color);
+                SpawnStickman(p.row, p.col, p.color, p.isHidden && editor.hiddenMode);
             }
 
         if (data.spawnerPlacements != null)
@@ -89,7 +89,7 @@ public class LevelEditorVisuals
 
     // --- Stickman ---
 
-    public void SpawnStickman(int row, int col, StickmanColor color)
+    public void SpawnStickman(int row, int col, StickmanColor color, bool isHidden = false)
     {
         var key = new Vector2Int(row, col);
         DestroyIfExists(stickmen, key);
@@ -101,7 +101,13 @@ public class LevelEditorVisuals
         var obj = InstantiatePrefab(editor.stickmanPrefab, pos, Quaternion.Euler(0f, 180f, 0f));
         obj.name = $"Stickman_{row}_{col}_{color}";
 
-        ApplyColor(obj, editor.colorConfig != null ? editor.colorConfig.GetRenderColor(color) : Color.white);
+        Color renderColor;
+        if (isHidden && editor.gameConfig != null)
+            renderColor = editor.gameConfig.hiddenStickmanColor;
+        else
+            renderColor = editor.colorConfig != null ? editor.colorConfig.GetRenderColor(color) : Color.white;
+
+        ApplyColor(obj, renderColor);
         stickmen[key] = obj;
     }
 
@@ -111,6 +117,27 @@ public class LevelEditorVisuals
         stickmen.Remove(new Vector2Int(row, col));
         SetCellActive(row, col, false);
         SpawnWall(row, col);
+    }
+
+    public void UpdateHiddenStickmen()
+    {
+        var data = editor.editData;
+        if (data == null || data.stickmanPlacements == null) return;
+
+        for (int i = 0; i < data.stickmanPlacements.Length; i++)
+        {
+            var p = data.stickmanPlacements[i];
+            if (!p.isHidden) continue;
+
+            var key = new Vector2Int(p.row, p.col);
+            if (!stickmen.TryGetValue(key, out var obj) || obj == null) continue;
+
+            Color color = editor.hiddenMode && editor.gameConfig != null
+                ? editor.gameConfig.hiddenStickmanColor
+                : editor.colorConfig != null ? editor.colorConfig.GetRenderColor(p.color) : Color.white;
+
+            ApplyColor(obj, color);
+        }
     }
 
     // --- Spawner ---
@@ -351,13 +378,17 @@ public class LevelEditorVisuals
 
     private static void ApplyColor(GameObject obj, Color color)
     {
-        var renderer = obj.GetComponentInChildren<Renderer>();
-        if (renderer == null) return;
+        var renderers = obj.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0) return;
 
         var propBlock = new MaterialPropertyBlock();
-        renderer.GetPropertyBlock(propBlock);
-        propBlock.SetColor("_Color", color);
-        renderer.SetPropertyBlock(propBlock);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            renderers[i].GetPropertyBlock(propBlock);
+            propBlock.SetColor("_Color", color);
+            propBlock.SetColor("_BaseColor", color);
+            renderers[i].SetPropertyBlock(propBlock);
+        }
     }
 
     private static void DestroyIfExists(Dictionary<Vector2Int, GameObject> dict, Vector2Int key)

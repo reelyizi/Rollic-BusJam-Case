@@ -7,6 +7,7 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GameObject spawnerPrefab;
     [SerializeField] private float cellSize = 1.2f;
     [SerializeField] private Transform gridOrigin;
+    [SerializeField] private GameConfig gameConfig;
 
     private bool[,] occupied;
     private bool[,] walkable;
@@ -34,7 +35,7 @@ public class GridManager : MonoBehaviour
             for (int i = 0; i < levelData.stickmanPlacements.Length; i++)
             {
                 var placement = levelData.stickmanPlacements[i];
-                SpawnStickman(placement.row, placement.col, placement.color);
+                SpawnStickman(placement.row, placement.col, placement.color, placement.isHidden);
             }
         }
 
@@ -71,12 +72,12 @@ public class GridManager : MonoBehaviour
         occupied[placement.row, placement.col] = true;
     }
 
-    private void SpawnStickman(int row, int col, StickmanColor color)
+    private void SpawnStickman(int row, int col, StickmanColor color, bool isHidden = false)
     {
         Vector3 worldPos = GridToWorldPosition(row, col);
         var obj = ObjectPool.Instance.Get(stickmanPrefab, worldPos, Quaternion.identity);
         var stickman = obj.GetComponent<Stickman>();
-        stickman.Initialize(color, row, col, colorConfig);
+        stickman.Initialize(color, row, col, colorConfig, isHidden, gameConfig);
 
         occupied[row, col] = true;
         stickmen[row, col] = stickman;
@@ -84,7 +85,7 @@ public class GridManager : MonoBehaviour
 
     public void SpawnStickmanAt(int row, int col, StickmanColor color)
     {
-        SpawnStickman(row, col, color);
+        SpawnStickman(row, col, color, false);
     }
 
     public Vector3 GridToWorldPosition(int row, int col)

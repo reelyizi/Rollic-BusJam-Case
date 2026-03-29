@@ -9,6 +9,7 @@ public class Stickman : MonoBehaviour
     public int GridRow { get; set; }
     public int GridCol { get; set; }
     public bool HasPath { get; private set; }
+    public bool IsHidden { get; private set; }
 
     [SerializeField] private float moveSpeed = 5f;
 
@@ -17,6 +18,7 @@ public class Stickman : MonoBehaviour
     private Renderer meshRenderer;
     private MaterialPropertyBlock propBlock;
     private Coroutine moveCoroutine;
+    private ColorConfig colorConfig;
 
     private static readonly int RunTrigger = Animator.StringToHash("Run");
     private static readonly int IdleTrigger = Animator.StringToHash("Idle");
@@ -30,15 +32,21 @@ public class Stickman : MonoBehaviour
         propBlock = new MaterialPropertyBlock();
     }
 
-    public void Initialize(StickmanColor color, int row, int col, ColorConfig config)
+    public void Initialize(StickmanColor color, int row, int col, ColorConfig config, bool isHidden = false, GameConfig gameConfig = null)
     {
         Color = color;
         GridRow = row;
         GridCol = col;
         HasPath = false;
+        IsHidden = isHidden;
+        colorConfig = config;
+
+        Color renderColor = isHidden && gameConfig != null
+            ? gameConfig.hiddenStickmanColor
+            : config.GetRenderColor(color);
 
         meshRenderer.GetPropertyBlock(propBlock);
-        propBlock.SetColor("_Color", config.GetRenderColor(color));
+        propBlock.SetColor("_Color", renderColor);
         meshRenderer.SetPropertyBlock(propBlock);
 
         if (outline != null)
@@ -48,8 +56,29 @@ public class Stickman : MonoBehaviour
             animator.SetTrigger(IdleTrigger);
     }
 
+    public void Reveal()
+    {
+        if (!IsHidden) return;
+        IsHidden = false;
+
+        meshRenderer.GetPropertyBlock(propBlock);
+        propBlock.SetColor("_Color", colorConfig.GetRenderColor(Color));
+        meshRenderer.SetPropertyBlock(propBlock);
+    }
+
     public void SetHasPath(bool hasPath)
     {
+        if (IsHidden)
+        {
+            if (hasPath)
+                Reveal();
+            else
+            {
+                HasPath = false;
+                return;
+            }
+        }
+
         HasPath = hasPath;
         if (outline != null)
             outline.enabled = hasPath;

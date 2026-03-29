@@ -24,6 +24,7 @@ public class LevelEditor : MonoBehaviour
     [HideInInspector] public StickmanColor selectedColor = StickmanColor.Red;
     [HideInInspector] public bool pathMode;
     [HideInInspector] public bool spawnerMode;
+    [HideInInspector] public bool hiddenMode;
     [HideInInspector] public Vector2Int selectedSpawnerCell = new(-1, -1);
     [HideInInspector] public LevelData editData;
 

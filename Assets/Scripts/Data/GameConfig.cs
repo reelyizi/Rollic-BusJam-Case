@@ -15,4 +15,7 @@ public class GameConfig : ScriptableObject
 
     [Header("Spawner")]
     public float spawnerYOffset = 0f;
+
+    [Header("Hidden Stickman")]
+    public Color hiddenStickmanColor = Color.black;
 }
