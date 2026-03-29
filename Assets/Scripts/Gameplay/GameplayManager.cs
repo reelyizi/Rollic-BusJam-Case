@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,7 +11,7 @@ public class GameplayManager : MonoBehaviour
     [SerializeField] private BusManager busManager;
     [SerializeField] private InputHandler inputHandler;
     [SerializeField] private TimerDisplay timerDisplay;
-    [SerializeField] private LevelDatabase levelDatabase;
+    [SerializeField] private LevelData levelData;
     [SerializeField] private ColorConfig colorConfig;
 
     [Header("UI")]
@@ -21,31 +20,27 @@ public class GameplayManager : MonoBehaviour
     [SerializeField] private GameObject losePanel;
 
     private PlayState state;
-    private LevelData currentLevelData;
-    private bool isMoving;
+    private readonly List<Stickman> movingStickmen = new();
 
     private void Start()
     {
-        int levelIndex = SaveManager.Instance != null ? SaveManager.Instance.Data.currentLevel : 0;
-        currentLevelData = levelDatabase.GetLevel(levelIndex);
-
-        if (currentLevelData == null)
+        if (levelData == null)
         {
-            Debug.LogError($"[GameplayManager] Level {levelIndex} not found in database!");
+            Debug.LogError("[GameplayManager] No level data assigned!");
             return;
         }
 
-        gridManager.Initialize(currentLevelData, colorConfig);
-        busStop.Initialize(currentLevelData.busStopSlotCount);
-        busManager.Initialize(currentLevelData.busSequence);
+        gridManager.Initialize(levelData, colorConfig);
+        busStop.Initialize(levelData.busStopSlotCount);
+        busManager.Initialize(levelData.busSequence, busStop);
+        busManager.SpawnAllBuses();
 
         if (SaveManager.Instance != null)
-            SaveManager.Instance.Data.timerRemaining = currentLevelData.timerDuration;
+            SaveManager.Instance.Data.timerRemaining = levelData.timerDuration;
 
         gridManager.RefreshAllPaths();
 
         inputHandler.OnStickmanTapped += HandleStickmanTapped;
-        busManager.OnBusReady += HandleBusReady;
         inputHandler.SetEnabled(false);
 
         state = PlayState.PreGame;
@@ -66,9 +61,7 @@ public class GameplayManager : MonoBehaviour
         if (state == PlayState.Playing)
         {
             if (SaveManager.Instance != null && SaveManager.Instance.Data.timerRemaining <= 0f)
-            {
                 OnLose();
-            }
         }
     }
 
@@ -76,7 +69,6 @@ public class GameplayManager : MonoBehaviour
     {
         state = PlayState.Playing;
         inputHandler.SetEnabled(true);
-        busManager.SpawnNextBus();
 
         if (tapToStartOverlay != null) tapToStartOverlay.SetActive(false);
 
@@ -86,19 +78,14 @@ public class GameplayManager : MonoBehaviour
 
     private void HandleStickmanTapped(Stickman stickman)
     {
-        if (state != PlayState.Playing || isMoving) return;
-
-        if (!busStop.HasEmptySlot())
-        {
-            OnLose();
-            return;
-        }
+        if (state != PlayState.Playing) return;
+        if (movingStickmen.Contains(stickman)) return;
 
         var occupied = gridManager.GetOccupiedGrid();
         occupied[stickman.GridRow, stickman.GridCol] = false;
 
-        var path = PathFinder.FindPathToTop(gridManager.GetWalkableGrid(), occupied, stickman.GridRow, stickman.GridCol,
-            gridManager.Rows, gridManager.Cols);
+        var path = PathFinder.FindPathToTop(gridManager.GetWalkableGrid(), occupied,
+            stickman.GridRow, stickman.GridCol, gridManager.Rows, gridManager.Cols);
 
         if (path == null)
         {
@@ -106,9 +93,10 @@ public class GameplayManager : MonoBehaviour
             return;
         }
 
-        isMoving = true;
         gridManager.ClearCell(stickman.GridRow, stickman.GridCol);
         stickman.SetHasPath(false);
+        movingStickmen.Add(stickman);
+        gridManager.RefreshAllPaths();
 
         var worldPath = new List<Vector3>();
         for (int i = 0; i < path.Count; i++)
@@ -123,34 +111,47 @@ public class GameplayManager : MonoBehaviour
 
         if (slotIndex == -1)
         {
-            OnLose();
+            waitingAtTop.Add(stickman);
             return;
         }
 
+        MoveToSlot(stickman, slotIndex);
+    }
+
+    private void MoveToSlot(Stickman stickman, int slotIndex)
+    {
         Vector3 slotPos = busStop.GetSlotPosition(slotIndex);
+        busStop.AssignToSlot(slotIndex, stickman);
 
         stickman.MoveAlongPath(new List<Vector3> { slotPos }, () =>
         {
-            busStop.AssignToSlot(slotIndex, stickman);
+            movingStickmen.Remove(stickman);
+            busManager.OnPassengerArrived(stickman);
+            ProcessWaitingStickmen();
             gridManager.RefreshAllPaths();
-            busManager.TryLoadPassengers(busStop);
-            isMoving = false;
-
             CheckWinCondition();
         });
     }
 
-    private void HandleBusReady(StickmanColor busColor)
+    private readonly List<Stickman> waitingAtTop = new();
+
+    private void ProcessWaitingStickmen()
     {
-        busManager.TryLoadPassengers(busStop);
+        for (int i = waitingAtTop.Count - 1; i >= 0; i--)
+        {
+            int slotIndex = busStop.GetFirstEmptySlotIndex();
+            if (slotIndex == -1) break;
+
+            var stickman = waitingAtTop[i];
+            waitingAtTop.RemoveAt(i);
+            MoveToSlot(stickman, slotIndex);
+        }
     }
 
     private void CheckWinCondition()
     {
         if (gridManager.StickmanCount() == 0 && busStop.IsEmpty() && gridManager.AllSpawnersExhausted())
-        {
             OnWin();
-        }
     }
 
     private void OnWin()
@@ -183,7 +184,5 @@ public class GameplayManager : MonoBehaviour
     {
         if (inputHandler != null)
             inputHandler.OnStickmanTapped -= HandleStickmanTapped;
-        if (busManager != null)
-            busManager.OnBusReady -= HandleBusReady;
     }
 }

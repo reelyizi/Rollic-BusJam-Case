@@ -7,127 +7,168 @@ public class BusManager : MonoBehaviour
 {
     [SerializeField] private GameObject busPrefab;
     [SerializeField] private Transform busStopPosition;
-    [SerializeField] private Transform busSpawnPoint;
-    [SerializeField] private Transform busDespawnPoint;
     [SerializeField] private float busDriveSpeed = 8f;
+    [SerializeField] private float despawnDistance = 15f;
     [SerializeField] private ColorConfig colorConfig;
+    [SerializeField] private GameConfig gameConfig;
 
     private BusDefinition[] busSequence;
+    private readonly List<GameObject> activeBuses = new();
     private int currentBusIndex;
-    private GameObject currentBus;
-    private int currentBusRemainingCapacity;
-    private bool isProcessing;
+    private int currentBusLoaded;
+    private int currentBusBoarded;
+    private bool isShifting;
+    private BusStop busStop;
 
     public event Action OnAllBusesComplete;
-    public event Action<StickmanColor> OnBusReady;
 
-    public StickmanColor CurrentBusColor => busSequence[currentBusIndex].color;
-
-    public void Initialize(BusDefinition[] sequence)
+    public void Initialize(BusDefinition[] sequence, BusStop stop)
     {
         busSequence = sequence;
+        busStop = stop;
         currentBusIndex = 0;
-        isProcessing = false;
+        currentBusLoaded = 0;
+        currentBusBoarded = 0;
+        isShifting = false;
     }
 
-    public void SpawnNextBus()
+    public void SpawnAllBuses()
     {
-        if (currentBusIndex >= busSequence.Length)
-        {
-            OnAllBusesComplete?.Invoke();
-            return;
-        }
+        if (busSequence == null) return;
 
-        StartCoroutine(DriveIn());
-    }
-
-    private IEnumerator DriveIn()
-    {
-        isProcessing = true;
-        var def = busSequence[currentBusIndex];
-        currentBusRemainingCapacity = def.capacity;
-
-        Vector3 spawnPos = busSpawnPoint != null ? busSpawnPoint.position : transform.position + Vector3.right * 15f;
+        float gap = gameConfig != null ? gameConfig.busGap : 2f;
         Vector3 stopPos = busStopPosition != null ? busStopPosition.position : transform.position;
 
-        currentBus = ObjectPool.Instance.Get(busPrefab, spawnPos, Quaternion.identity);
-
-        var busVisual = currentBus.GetComponent<BusVisual>();
-        if (busVisual != null)
-            busVisual.SetColor(colorConfig.GetRenderColor(def.color));
-
-        while (Vector3.Distance(currentBus.transform.position, stopPos) > 0.1f)
+        for (int i = 0; i < busSequence.Length; i++)
         {
-            currentBus.transform.position = Vector3.MoveTowards(
-                currentBus.transform.position, stopPos, busDriveSpeed * Time.deltaTime);
-            yield return null;
+            var def = busSequence[i];
+            Vector3 pos = stopPos - new Vector3(i * gap, 0f, 0f);
+
+            var obj = ObjectPool.Instance.Get(busPrefab, pos, Quaternion.Euler(0f, 90f, 0f));
+            obj.name = $"Bus_{i}_{def.color}";
+
+            var busVisual = obj.GetComponent<BusVisual>();
+            if (busVisual != null)
+                busVisual.SetColor(colorConfig.GetRenderColor(def.color));
+
+            activeBuses.Add(obj);
         }
-
-        currentBus.transform.position = stopPos;
-        isProcessing = false;
-        OnBusReady?.Invoke(def.color);
     }
 
-    public void TryLoadPassengers(BusStop busStop)
+    public void OnPassengerArrived(Stickman stickman)
     {
-        if (isProcessing || currentBus == null) return;
-        if (currentBusIndex >= busSequence.Length) return;
+        if (isShifting || !HasCurrentBus()) return;
 
-        var matching = busStop.RemoveMatchingPassengers(busSequence[currentBusIndex].color);
-
-        if (matching.Count == 0) return;
-
-        StartCoroutine(LoadAndCheckDepart(matching, busStop));
+        if (stickman.Color == busSequence[currentBusIndex].color)
+            SendToBus(stickman);
     }
 
-    private IEnumerator LoadAndCheckDepart(List<Stickman> passengers, BusStop busStop)
+    private void CheckWaitingPassengers()
     {
-        isProcessing = true;
+        if (!HasCurrentBus()) return;
 
-        int boarded = 0;
+        var busColor = busSequence[currentBusIndex].color;
+        int capacity = busSequence[currentBusIndex].capacity;
+
+        while (currentBusLoaded < capacity)
+        {
+            var match = busStop.GetFirstMatchingPassenger(busColor);
+            if (match == null) break;
+
+            SendToBus(match);
+        }
+    }
+
+    private void SendToBus(Stickman stickman)
+    {
+        busStop.RemovePassenger(stickman);
+        currentBusLoaded++;
+
+        var currentBus = activeBuses[0];
         Vector3 busPos = currentBus.transform.position;
 
-        for (int i = 0; i < passengers.Count; i++)
+        stickman.BoardBus(busPos, () =>
         {
-            if (currentBusRemainingCapacity <= 0) break;
+            var busVisual = currentBus.GetComponent<BusVisual>();
+            if (busVisual != null)
+                busVisual.ShowNextPassenger(colorConfig.GetRenderColor(stickman.Color));
 
-            var passenger = passengers[i];
-            bool done = false;
-            passenger.BoardBus(busPos, () => done = true);
+            stickman.gameObject.SetActive(false);
+            currentBusBoarded++;
 
-            while (!done) yield return null;
-
-            passenger.gameObject.SetActive(false);
-            currentBusRemainingCapacity--;
-            boarded++;
-        }
-
-        if (currentBusRemainingCapacity <= 0)
-        {
-            yield return StartCoroutine(DriveOut());
-            currentBusIndex++;
-            SpawnNextBus();
-        }
-        else
-        {
-            isProcessing = false;
-        }
+            int capacity = busSequence[currentBusIndex].capacity;
+            if (currentBusBoarded >= capacity)
+                StartCoroutine(DriveAwayAndShift());
+        });
     }
 
-    private IEnumerator DriveOut()
+    private bool HasCurrentBus()
     {
-        Vector3 despawnPos = busDespawnPoint != null ? busDespawnPoint.position : transform.position - Vector3.right * 15f;
+        return currentBusIndex < busSequence.Length && activeBuses.Count > 0;
+    }
 
-        while (Vector3.Distance(currentBus.transform.position, despawnPos) > 0.1f)
+    private IEnumerator DriveAwayAndShift()
+    {
+        isShifting = true;
+
+        var departing = activeBuses[0];
+        activeBuses.RemoveAt(0);
+
+        currentBusIndex++;
+        currentBusLoaded = 0;
+        currentBusBoarded = 0;
+
+        StartCoroutine(DriveOut(departing));
+
+        if (activeBuses.Count > 0)
         {
-            currentBus.transform.position = Vector3.MoveTowards(
-                currentBus.transform.position, despawnPos, busDriveSpeed * Time.deltaTime);
+            float gap = gameConfig != null ? gameConfig.busGap : 2f;
+            Vector3 stopPos = busStopPosition != null ? busStopPosition.position : transform.position;
+            yield return StartCoroutine(ShiftBuses(stopPos, gap));
+        }
+
+        isShifting = false;
+
+        if (currentBusIndex < busSequence.Length)
+            CheckWaitingPassengers();
+        else
+            OnAllBusesComplete?.Invoke();
+    }
+
+    private IEnumerator DriveOut(GameObject bus)
+    {
+        Vector3 driveDir = bus.transform.forward;
+        float traveled = 0f;
+        while (traveled < despawnDistance)
+        {
+            float step = busDriveSpeed * Time.deltaTime;
+            bus.transform.position += driveDir * step;
+            traveled += step;
             yield return null;
         }
-
-        ObjectPool.Instance.Return(currentBus);
-        currentBus = null;
+        ObjectPool.Instance.Return(bus);
     }
 
-    public bool IsProcessing => isProcessing;
+    private IEnumerator ShiftBuses(Vector3 stopPos, float gap)
+    {
+        var targets = new Vector3[activeBuses.Count];
+        for (int i = 0; i < activeBuses.Count; i++)
+            targets[i] = stopPos - new Vector3(i * gap, 0f, 0f);
+
+        bool moving = true;
+        while (moving)
+        {
+            moving = false;
+            for (int i = 0; i < activeBuses.Count; i++)
+            {
+                if (Vector3.Distance(activeBuses[i].transform.position, targets[i]) > 0.05f)
+                {
+                    activeBuses[i].transform.position = Vector3.MoveTowards(
+                        activeBuses[i].transform.position, targets[i], busDriveSpeed * Time.deltaTime);
+                    moving = true;
+                }
+            }
+            yield return null;
+        }
+    }
 }

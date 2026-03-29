@@ -5,13 +5,14 @@ public class GridManager : MonoBehaviour
 {
     [SerializeField] private GameObject stickmanPrefab;
     [SerializeField] private GameObject spawnerPrefab;
-    [SerializeField] private float cellSize = 1.2f;
-    [SerializeField] private Transform gridOrigin;
+    [SerializeField] private GameObject wallPrefab;
+    [SerializeField] private Transform gridParent;
     [SerializeField] private GameConfig gameConfig;
 
     private bool[,] occupied;
     private bool[,] walkable;
     private Stickman[,] stickmen;
+    private Transform[] gridCells;
     private int rows;
     private int cols;
     private ColorConfig colorConfig;
@@ -27,6 +28,7 @@ public class GridManager : MonoBehaviour
         cols = levelData.gridCols;
         stickmen = new Stickman[rows, cols];
 
+        CacheGridCells();
         PathFinder.BuildGrids(levelData, out walkable, out var _);
         occupied = new bool[rows, cols];
 
@@ -44,6 +46,71 @@ public class GridManager : MonoBehaviour
             for (int i = 0; i < levelData.spawnerPlacements.Length; i++)
                 InitSpawner(levelData.spawnerPlacements[i]);
         }
+
+        SetupGridVisuals(levelData);
+    }
+
+    private void SetupGridVisuals(LevelData levelData)
+    {
+        var active = new bool[rows, cols];
+
+        if (levelData.activeCells != null)
+            for (int i = 0; i < levelData.activeCells.Length; i++)
+                active[levelData.activeCells[i].row, levelData.activeCells[i].col] = true;
+
+        if (levelData.stickmanPlacements != null)
+            for (int i = 0; i < levelData.stickmanPlacements.Length; i++)
+                active[levelData.stickmanPlacements[i].row, levelData.stickmanPlacements[i].col] = true;
+
+        if (levelData.spawnerPlacements != null)
+            for (int i = 0; i < levelData.spawnerPlacements.Length; i++)
+                active[levelData.spawnerPlacements[i].row, levelData.spawnerPlacements[i].col] = true;
+
+        float yOffset = gameConfig != null ? gameConfig.wallYOffset : -0.5f;
+        Vector3 cellSize = GetCellSize();
+
+        for (int r = 0; r < rows; r++)
+        {
+            for (int c = 0; c < cols; c++)
+            {
+                int index = r * cols + c;
+                if (gridCells == null || index >= gridCells.Length) continue;
+
+                if (active[r, c])
+                {
+                    gridCells[index].gameObject.SetActive(true);
+                }
+                else
+                {
+                    gridCells[index].gameObject.SetActive(false);
+
+                    if (wallPrefab != null)
+                    {
+                        var pos = gridCells[index].position;
+                        pos.y += yOffset;
+                        var wall = Instantiate(wallPrefab, pos, Quaternion.identity, transform);
+                        wall.transform.localScale = cellSize;
+                        wall.name = $"Wall_{r}_{c}";
+                    }
+                }
+            }
+        }
+    }
+
+    private void CacheGridCells()
+    {
+        if (gridParent == null) return;
+        gridCells = new Transform[gridParent.childCount];
+        for (int i = 0; i < gridParent.childCount; i++)
+            gridCells[i] = gridParent.GetChild(i);
+    }
+
+    public Vector3 GridToWorldPosition(int row, int col)
+    {
+        int index = row * cols + col;
+        if (gridCells != null && index >= 0 && index < gridCells.Length)
+            return gridCells[index].position;
+        return Vector3.zero;
     }
 
     private void InitSpawner(SpawnerPlacement placement)
@@ -88,12 +155,13 @@ public class GridManager : MonoBehaviour
         SpawnStickman(row, col, color, false);
     }
 
-    public Vector3 GridToWorldPosition(int row, int col)
+    private Vector3 GetCellSize()
     {
-        Vector3 origin = gridOrigin != null ? gridOrigin.position : Vector3.zero;
-        float x = origin.x + col * cellSize;
-        float z = origin.z - row * cellSize;
-        return new Vector3(x, origin.y, z);
+        if (gridCells == null || gridCells.Length < 2) return Vector3.one;
+
+        float gapX = Mathf.Abs(GridToWorldPosition(0, 1).x - GridToWorldPosition(0, 0).x);
+        float gapZ = Mathf.Abs(GridToWorldPosition(1, 0).z - GridToWorldPosition(0, 0).z);
+        return new Vector3(gapX == 0 ? 1f : gapX, 1f, gapZ == 0 ? 1f : gapZ);
     }
 
     public bool IsCellEmpty(int row, int col)

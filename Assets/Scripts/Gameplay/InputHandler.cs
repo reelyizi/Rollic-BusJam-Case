@@ -21,12 +21,18 @@ public class InputHandler : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit, 100f, stickmanLayer))
+            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);            
+            if (Physics.Raycast(ray, out RaycastHit hit, 1000f, stickmanLayer))
             {
                 var stickman = hit.collider.GetComponentInParent<Stickman>();
                 if (stickman != null && stickman.HasPath)
                     OnStickmanTapped?.Invoke(stickman);
+                else if (stickman != null)
+                    Debug.Log($"[InputHandler] Tapped {stickman.name} but HasPath={stickman.HasPath}");
+            }
+            else
+            {
+                Debug.Log("[InputHandler] Raycast hit nothing on Stickman layer");
             }
         }
     }

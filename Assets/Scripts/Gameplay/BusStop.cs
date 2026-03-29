@@ -3,11 +3,10 @@ using UnityEngine;
 
 public class BusStop : MonoBehaviour
 {
-    [SerializeField] private float slotSpacing = 1.2f;
-    [SerializeField] private Transform slotsOrigin;
+    [SerializeField] private Transform slotsParent;
 
     private Stickman[] slots;
-    private Vector3[] slotPositions;
+    private Transform[] slotTransforms;
     private int slotCount;
 
     public int SlotCount => slotCount;
@@ -28,14 +27,10 @@ public class BusStop : MonoBehaviour
     {
         slotCount = count;
         slots = new Stickman[slotCount];
-        slotPositions = new Vector3[slotCount];
 
-        Vector3 origin = slotsOrigin != null ? slotsOrigin.position : transform.position;
-
-        for (int i = 0; i < slotCount; i++)
-        {
-            slotPositions[i] = origin + new Vector3(i * slotSpacing, 0f, 0f);
-        }
+        slotTransforms = new Transform[slotsParent.childCount];
+        for (int i = 0; i < slotsParent.childCount; i++)
+            slotTransforms[i] = slotsParent.GetChild(i);
     }
 
     public bool HasEmptySlot()
@@ -54,7 +49,9 @@ public class BusStop : MonoBehaviour
 
     public Vector3 GetSlotPosition(int index)
     {
-        return slotPositions[index];
+        if (index >= 0 && index < slotTransforms.Length)
+            return slotTransforms[index].position;
+        return transform.position;
     }
 
     public void AssignToSlot(int index, Stickman stickman)
@@ -62,38 +59,22 @@ public class BusStop : MonoBehaviour
         slots[index] = stickman;
     }
 
-    public List<Stickman> RemoveMatchingPassengers(StickmanColor busColor)
+    public Stickman GetFirstMatchingPassenger(StickmanColor busColor)
     {
-        var matched = new List<Stickman>();
-
         for (int i = 0; i < slotCount; i++)
-        {
             if (slots[i] != null && slots[i].Color == busColor)
-            {
-                matched.Add(slots[i]);
-                slots[i] = null;
-            }
-        }
-
-        CompactSlots();
-        return matched;
+                return slots[i];
+        return null;
     }
 
-    private void CompactSlots()
+    public void RemovePassenger(Stickman stickman)
     {
-        int writeIndex = 0;
         for (int i = 0; i < slotCount; i++)
         {
-            if (slots[i] != null)
+            if (slots[i] == stickman)
             {
-                if (i != writeIndex)
-                {
-                    slots[writeIndex] = slots[i];
-                    slots[i] = null;
-
-                    slots[writeIndex].transform.position = slotPositions[writeIndex];
-                }
-                writeIndex++;
+                slots[i] = null;
+                return;
             }
         }
     }

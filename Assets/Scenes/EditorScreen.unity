@@ -259,9 +259,10 @@ MonoBehaviour:
     type: 3}
   gridParent: {fileID: 1310941741}
   busSpawnOrigin: {fileID: 666142512}
-  selectedColor: 4
+  selectedColor: 0
   pathMode: 0
   spawnerMode: 0
+  hiddenMode: 1
   selectedSpawnerCell: {x: 4, y: 6}
   editData: {fileID: 1812448709}
 --- !u!4 &35854861
@@ -1877,6 +1878,40 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 637559219}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &653820617
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 653820618}
+  m_Layer: 0
+  m_Name: Env
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &653820618
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 653820617}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.2853198, y: -165.2921, z: 220.42163}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 666142512}
+  - {fileID: 6153562648184978307}
+  - {fileID: 2014667428}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &666142511
 GameObject:
   m_ObjectHideFlags: 0
@@ -1887,7 +1922,7 @@ GameObject:
   m_Component:
   - component: {fileID: 666142512}
   m_Layer: 0
-  m_Name: Buss Stop
+  m_Name: Buss Stop Position
   m_TagString: Untagged
   m_Icon: {fileID: -1412012063857583412, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -1901,12 +1936,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 666142511}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.74, y: 0.55, z: 50.86}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 2.4546802, y: 165.8421, z: -169.56163}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 653820618}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &695071330
 PrefabInstance:
@@ -2660,7 +2695,7 @@ GameObject:
   m_Component:
   - component: {fileID: 847720844}
   m_Layer: 0
-  m_Name: Bus Stop
+  m_Name: Stickman Stop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5822,30 +5857,39 @@ MonoBehaviour:
   - row: 0
     col: 3
     color: 1
+    isHidden: 0
   - row: 1
     col: 3
     color: 2
+    isHidden: 0
   - row: 0
     col: 2
     color: 1
+    isHidden: 0
   - row: 2
     col: 2
     color: 1
-  - row: 2
-    col: 3
-    color: 0
+    isHidden: 0
   - row: 1
     col: 4
     color: 2
+    isHidden: 0
   - row: 2
     col: 5
     color: 2
+    isHidden: 0
   - row: 3
     col: 5
     color: 0
+    isHidden: 0
   - row: 2
     col: 7
     color: 4
+    isHidden: 0
+  - row: 2
+    col: 3
+    color: 0
+    isHidden: 1
   activeCells:
   - row: 2
     col: 2
@@ -6638,7 +6682,7 @@ GameObject:
   - component: {fileID: 2014667426}
   - component: {fileID: 2014667425}
   m_Layer: 0
-  m_Name: Plane
+  m_Name: Ground
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6724,12 +6768,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2014667424}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.2853198, y: 165.2921, z: -220.42163}
   m_LocalScale: {x: 20, y: 1, z: 20}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 653820618}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2033657176
 PrefabInstance:
@@ -7435,11 +7479,11 @@ Transform:
   m_GameObject: {fileID: 6786370539324514617}
   serializedVersion: 2
   m_LocalRotation: {x: -0.49999976, y: 0.5000003, z: 0.5000003, w: 0.4999997}
-  m_LocalPosition: {x: 5.2, y: 0.2, z: 50.7}
+  m_LocalPosition: {x: 4.91468, y: 165.4921, z: -169.72163}
   m_LocalScale: {x: 2.2588, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 653820618}
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 90}
 --- !u!1 &6786370539324514617
 GameObject:
@@ -7473,9 +7517,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 897621848}
   - {fileID: 868467971}
-  - {fileID: 2014667428}
   - {fileID: 1310941741}
   - {fileID: 847720844}
+  - {fileID: 653820618}
   - {fileID: 35854861}
-  - {fileID: 666142512}
-  - {fileID: 6153562648184978307}

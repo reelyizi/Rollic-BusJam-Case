@@ -100,12 +100,10 @@ public class Stickman : MonoBehaviour
         for (int i = 0; i < worldPath.Count; i++)
         {
             Vector3 target = worldPath[i];
-            Vector3 dir = (target - transform.position).normalized;
-            if (dir != Vector3.zero)
-                transform.rotation = Quaternion.LookRotation(dir);
 
             while (Vector3.Distance(transform.position, target) > 0.05f)
             {
+                RotateToward(target);
                 transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
                 yield return null;
             }
@@ -113,11 +111,24 @@ public class Stickman : MonoBehaviour
             transform.position = target;
         }
 
+        // Face forward at bus stop
+        transform.rotation = Quaternion.LookRotation(Vector3.forward);
+
         if (animator != null)
             animator.SetTrigger(IdleTrigger);
 
         moveCoroutine = null;
         onComplete?.Invoke();
+    }
+
+    private void RotateToward(Vector3 target)
+    {
+        Vector3 dir = (target - transform.position).normalized;
+        if (dir != Vector3.zero)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(dir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 10f * Time.deltaTime);
+        }
     }
 
     public void BoardBus(Vector3 busPosition, Action onComplete)
@@ -135,6 +146,7 @@ public class Stickman : MonoBehaviour
 
         while (Vector3.Distance(transform.position, busPosition) > 0.05f)
         {
+            RotateToward(busPosition);
             transform.position = Vector3.MoveTowards(transform.position, busPosition, moveSpeed * Time.deltaTime);
             yield return null;
         }
