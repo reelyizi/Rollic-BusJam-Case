@@ -23,6 +23,8 @@ public static class LevelEditorUtils
 
     public static void SetPlacement(LevelData levelData, int row, int col, StickmanColor color, bool isHidden = false)
     {
+        if (row == 0) isHidden = false;
+
         var list = new List<StickmanPlacement>(levelData.stickmanPlacements ?? new StickmanPlacement[0]);
         for (int i = 0; i < list.Count; i++)
         {

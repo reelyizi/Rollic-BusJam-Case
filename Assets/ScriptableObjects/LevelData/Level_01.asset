@@ -76,7 +76,7 @@ MonoBehaviour:
     col: 6
     direction: 0
     colorQueue: 040000000400000000000000
-  busStopSlotCount: 6
+  busStopSlotCount: 7
   busSequence:
   - color: 1
     capacity: 3

@@ -15,9 +15,51 @@ MonoBehaviour:
   levelNumber: 2
   gridRows: 8
   gridCols: 8
-  stickmanPlacements: []
+  stickmanPlacements:
+  - row: 1
+    col: 4
+    color: 2
+    isHidden: 1
+  - row: 2
+    col: 4
+    color: 2
+    isHidden: 1
+  - row: 0
+    col: 4
+    color: 2
+    isHidden: 0
+  - row: 0
+    col: 3
+    color: 1
+    isHidden: 0
+  - row: 2
+    col: 3
+    color: 1
+    isHidden: 1
+  - row: 0
+    col: 2
+    color: 3
+    isHidden: 0
+  - row: 1
+    col: 2
+    color: 1
+    isHidden: 1
+  - row: 2
+    col: 2
+    color: 3
+    isHidden: 1
+  - row: 1
+    col: 3
+    color: 3
+    isHidden: 1
   activeCells: []
   spawnerPlacements: []
-  busStopSlotCount: 6
-  busSequence: []
+  busStopSlotCount: 7
+  busSequence:
+  - color: 2
+    capacity: 3
+  - color: 3
+    capacity: 3
+  - color: 1
+    capacity: 3
   timerDuration: 120

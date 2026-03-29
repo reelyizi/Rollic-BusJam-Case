@@ -168,8 +168,9 @@ public class LevelEditorGridDrawer
             }
             else
             {
-                LevelEditorUtils.SetPlacement(levelData, r, c, editor.selectedColor, editor.hiddenMode);
-                editor.Visuals.SpawnStickman(r, c, editor.selectedColor, editor.hiddenMode);
+                bool hidden = editor.hiddenMode && r > 0;
+                LevelEditorUtils.SetPlacement(levelData, r, c, editor.selectedColor, hidden);
+                editor.Visuals.SpawnStickman(r, c, editor.selectedColor, hidden);
             }
         }
 
