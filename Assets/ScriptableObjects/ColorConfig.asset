@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56c474a9ab6a482468cf2f44931a206c, type: 3}
+  m_Name: ColorConfig
+  m_EditorClassIdentifier: 
+  colorMappings:
+  - stickmanColor: 0
+    renderColor: {r: 1, g: 0, b: 0, a: 1}
+  - stickmanColor: 1
+    renderColor: {r: 0, g: 0, b: 1, a: 1}
+  - stickmanColor: 2
+    renderColor: {r: 0, g: 1, b: 0, a: 1}
+  - stickmanColor: 3
+    renderColor: {r: 1, g: 1, b: 0, a: 1}
+  - stickmanColor: 4
+    renderColor: {r: 1, g: 0.4117647, b: 0.7058824, a: 1}
+  - stickmanColor: 5
+    renderColor: {r: 1, g: 0.54901963, b: 0, a: 1}

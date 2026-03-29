@@ -47,7 +47,7 @@ public class PlayerData
         {
             coins = config.startingCoins,
             currentLevel = config.startingLevel,
-            timerRemaining = config.defaultTimerDuration,
+            timerRemaining = 0f,
             lastSaveTimeTicks = DateTime.UtcNow.Ticks,
             soundEnabled = true,
             musicEnabled = true

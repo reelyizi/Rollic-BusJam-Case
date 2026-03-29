@@ -1,0 +1,119 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Stickman : MonoBehaviour
+{
+    public StickmanColor Color { get; private set; }
+    public int GridRow { get; set; }
+    public int GridCol { get; set; }
+    public bool HasPath { get; private set; }
+
+    [SerializeField] private float moveSpeed = 5f;
+
+    private Animator animator;
+    private Outline outline;
+    private Renderer meshRenderer;
+    private MaterialPropertyBlock propBlock;
+    private Coroutine moveCoroutine;
+
+    private static readonly int RunTrigger = Animator.StringToHash("Run");
+    private static readonly int IdleTrigger = Animator.StringToHash("Idle");
+    private static readonly int SitTrigger = Animator.StringToHash("Sit");
+
+    private void Awake()
+    {
+        animator = GetComponent<Animator>();
+        outline = GetComponent<Outline>();
+        meshRenderer = GetComponentInChildren<Renderer>();
+        propBlock = new MaterialPropertyBlock();
+    }
+
+    public void Initialize(StickmanColor color, int row, int col, ColorConfig config)
+    {
+        Color = color;
+        GridRow = row;
+        GridCol = col;
+        HasPath = false;
+
+        meshRenderer.GetPropertyBlock(propBlock);
+        propBlock.SetColor("_Color", config.GetRenderColor(color));
+        meshRenderer.SetPropertyBlock(propBlock);
+
+        if (outline != null)
+            outline.enabled = false;
+
+        if (animator != null)
+            animator.SetTrigger(IdleTrigger);
+    }
+
+    public void SetHasPath(bool hasPath)
+    {
+        HasPath = hasPath;
+        if (outline != null)
+            outline.enabled = hasPath;
+    }
+
+    public void MoveAlongPath(List<Vector3> worldPath, Action onComplete)
+    {
+        if (moveCoroutine != null)
+            StopCoroutine(moveCoroutine);
+
+        moveCoroutine = StartCoroutine(MoveAlongPathCoroutine(worldPath, onComplete));
+    }
+
+    private IEnumerator MoveAlongPathCoroutine(List<Vector3> worldPath, Action onComplete)
+    {
+        if (animator != null)
+            animator.SetTrigger(RunTrigger);
+
+        for (int i = 0; i < worldPath.Count; i++)
+        {
+            Vector3 target = worldPath[i];
+            Vector3 dir = (target - transform.position).normalized;
+            if (dir != Vector3.zero)
+                transform.rotation = Quaternion.LookRotation(dir);
+
+            while (Vector3.Distance(transform.position, target) > 0.05f)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
+                yield return null;
+            }
+
+            transform.position = target;
+        }
+
+        if (animator != null)
+            animator.SetTrigger(IdleTrigger);
+
+        moveCoroutine = null;
+        onComplete?.Invoke();
+    }
+
+    public void BoardBus(Vector3 busPosition, Action onComplete)
+    {
+        if (moveCoroutine != null)
+            StopCoroutine(moveCoroutine);
+
+        moveCoroutine = StartCoroutine(BoardBusCoroutine(busPosition, onComplete));
+    }
+
+    private IEnumerator BoardBusCoroutine(Vector3 busPosition, Action onComplete)
+    {
+        if (animator != null)
+            animator.SetTrigger(RunTrigger);
+
+        while (Vector3.Distance(transform.position, busPosition) > 0.05f)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, busPosition, moveSpeed * Time.deltaTime);
+            yield return null;
+        }
+
+        if (animator != null)
+            animator.SetTrigger(SitTrigger);
+
+        moveCoroutine = null;
+        onComplete?.Invoke();
+    }
+}
