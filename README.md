@@ -138,6 +138,3 @@ Levels are ScriptableObjects stored in `Resources/LevelData/`. Each level contai
 | Gameplay | Menu |
 |---|---|
 | ![Gameplay](Docs/gameplay.png) | ![Menu](Docs/menu.png) |
-
-## Target Platform
-iOS and Android (mobile optimized)
