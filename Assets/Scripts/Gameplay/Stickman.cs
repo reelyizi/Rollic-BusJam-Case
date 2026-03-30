@@ -10,8 +10,10 @@ public class Stickman : MonoBehaviour
     public int GridCol { get; set; }
     public bool HasPath { get; private set; }
     public bool IsHidden { get; private set; }
+    public bool IsReserved { get; private set; }
 
     [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private GameObject reservedCanvas;
 
     private Animator animator;
     private Outline outline;
@@ -32,13 +34,14 @@ public class Stickman : MonoBehaviour
         propBlock = new MaterialPropertyBlock();
     }
 
-    public void Initialize(StickmanColor color, int row, int col, ColorConfig config, bool isHidden = false, GameConfig gameConfig = null)
+    public void Initialize(StickmanColor color, int row, int col, ColorConfig config, bool isHidden = false, GameConfig gameConfig = null, bool isReserved = false)
     {
         Color = color;
         GridRow = row;
         GridCol = col;
         HasPath = false;
         IsHidden = isHidden;
+        IsReserved = isReserved;
         colorConfig = config;
 
         Color renderColor = isHidden && gameConfig != null
@@ -51,6 +54,9 @@ public class Stickman : MonoBehaviour
 
         if (outline != null)
             outline.enabled = false;
+
+        if (reservedCanvas != null)
+            reservedCanvas.SetActive(isReserved);
 
         if (animator != null)
             animator.SetTrigger(IdleTrigger);

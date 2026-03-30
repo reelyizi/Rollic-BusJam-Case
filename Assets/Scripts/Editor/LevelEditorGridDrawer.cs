@@ -46,12 +46,14 @@ public class LevelEditorGridDrawer
         var existing = levelData.GetColorAt(r, c);
         bool isPath = levelData.IsCellActive(r, c);
         bool hasSpawner = levelData.HasSpawnerAt(r, c);
-        bool isHidden = editor.hiddenMode && levelData.IsStickmanHidden(r, c);
+        bool isHidden = levelData.IsStickmanHidden(r, c);
+        bool isReserved = existing.HasValue && levelData.IsStickmanReserved(r, c);
         var rect = GUILayoutUtility.GetRect(30, 30, GUILayout.Width(30));
 
         DrawCellBackground(editor, rect, existing, isPath, hasSpawner, isHidden);
         DrawCellBorder(rect);
-        DrawCellLabel(rect, existing, isPath, hasSpawner, isHidden, levelData, r, c);
+        if (isReserved) DrawReservedBorder(rect);
+        DrawCellLabel(rect, existing, isPath, hasSpawner, isHidden, isReserved, levelData, r, c);
 
         if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
             HandleCellClick(editor, levelData, r, c, existing, hasSpawner);
@@ -83,8 +85,18 @@ public class LevelEditorGridDrawer
         EditorGUI.DrawRect(new Rect(rect.xMax - 1, rect.y, 1, rect.height), Color.black);
     }
 
+    private void DrawReservedBorder(Rect rect)
+    {
+        float t = 2f;
+        Color c = Color.yellow;
+        EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, t), c);
+        EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - t, rect.width, t), c);
+        EditorGUI.DrawRect(new Rect(rect.x, rect.y, t, rect.height), c);
+        EditorGUI.DrawRect(new Rect(rect.xMax - t, rect.y, t, rect.height), c);
+    }
+
     private void DrawCellLabel(Rect rect, StickmanColor? existing, bool isPath,
-        bool hasSpawner, bool isHidden, LevelData levelData, int r, int c)
+        bool hasSpawner, bool isHidden, bool isReserved, LevelData levelData, int r, int c)
     {
         string cellLabel;
         int fontSize;
@@ -108,6 +120,7 @@ public class LevelEditorGridDrawer
         {
             string letter = existing.Value.ToString()[0].ToString();
             cellLabel = isHidden ? letter.ToLower() : letter;
+            if (isReserved) cellLabel = $"*{cellLabel}";
             fontSize = 10;
         }
         else if (isPath)
@@ -169,8 +182,9 @@ public class LevelEditorGridDrawer
             else
             {
                 bool hidden = editor.hiddenMode && r > 0;
-                LevelEditorUtils.SetPlacement(levelData, r, c, editor.selectedColor, hidden);
-                editor.Visuals.SpawnStickman(r, c, editor.selectedColor, hidden);
+                bool reserved = editor.brushType == LevelEditor.BrushType.Reserved;
+                LevelEditorUtils.SetPlacement(levelData, r, c, editor.selectedColor, hidden, reserved);
+                editor.Visuals.SpawnStickman(r, c, editor.selectedColor, hidden, reserved);
             }
         }
 

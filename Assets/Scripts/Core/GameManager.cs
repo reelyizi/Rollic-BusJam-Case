@@ -31,31 +31,15 @@ public class GameManager : Singleton<GameManager>
         OnStateChanged?.Invoke(newState);
     }
 
-    public void LoadStartScreen()
+    public void LoadMenuScreen()
     {
-        SceneManager.LoadScene("StartScreen");
+        SceneManager.LoadScene("MenuScreen");
         SetState(GameState.StartScreen);
     }
 
     public void LoadGameplay()
     {
-        SceneManager.LoadScene("Gameplay");
+        SceneManager.LoadScene("GameplayScreen");
         SetState(GameState.Gameplay);
-    }
-
-    public void LoadStartScreenAsync(Action onReady)
-    {
-        var op = SceneManager.LoadSceneAsync("StartScreen");
-        op.allowSceneActivation = false;
-        StartCoroutine(WaitForSceneLoad(op, onReady));
-    }
-
-    private System.Collections.IEnumerator WaitForSceneLoad(AsyncOperation op, Action onReady)
-    {
-        while (op.progress < 0.9f)
-            yield return null;
-
-        onReady?.Invoke();
-        op.allowSceneActivation = true;
     }
 }

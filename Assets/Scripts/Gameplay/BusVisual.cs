@@ -1,9 +1,12 @@
 using UnityEngine;
+using TMPro;
 
 public class BusVisual : MonoBehaviour
 {
     [SerializeField] private Renderer bodyRenderer;
     [SerializeField] private GameObject[] seatPassengers;
+    [SerializeField] private GameObject reservedCanvas;
+    [SerializeField] private TextMeshProUGUI reservedCountText;
 
     private MaterialPropertyBlock propBlock;
     private int nextSeat;
@@ -24,6 +27,19 @@ public class BusVisual : MonoBehaviour
             for (int i = 0; i < seatPassengers.Length; i++)
                 if (seatPassengers[i] != null)
                     seatPassengers[i].SetActive(false);
+
+        if (reservedCanvas != null)
+            reservedCanvas.SetActive(false);
+    }
+
+    public void SetReservedCount(int count)
+    {
+        if (reservedCanvas != null)
+        {
+            reservedCanvas.SetActive(count > 0);
+            if (reservedCountText != null)
+                reservedCountText.text = count.ToString();
+        }
     }
 
     public void ShowNextPassenger(Color color)

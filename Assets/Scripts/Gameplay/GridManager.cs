@@ -37,7 +37,7 @@ public class GridManager : MonoBehaviour
             for (int i = 0; i < levelData.stickmanPlacements.Length; i++)
             {
                 var placement = levelData.stickmanPlacements[i];
-                SpawnStickman(placement.row, placement.col, placement.color, placement.isHidden);
+                SpawnStickman(placement.row, placement.col, placement.color, placement.isHidden, placement.isReserved);
             }
         }
 
@@ -139,12 +139,12 @@ public class GridManager : MonoBehaviour
         occupied[placement.row, placement.col] = true;
     }
 
-    private void SpawnStickman(int row, int col, StickmanColor color, bool isHidden = false)
+    private void SpawnStickman(int row, int col, StickmanColor color, bool isHidden = false, bool isReserved = false)
     {
         Vector3 worldPos = GridToWorldPosition(row, col);
         var obj = ObjectPool.Instance.Get(stickmanPrefab, worldPos, Quaternion.identity);
         var stickman = obj.GetComponent<Stickman>();
-        stickman.Initialize(color, row, col, colorConfig, isHidden, gameConfig);
+        stickman.Initialize(color, row, col, colorConfig, isHidden, gameConfig, isReserved);
 
         occupied[row, col] = true;
         stickmen[row, col] = stickman;

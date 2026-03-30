@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 [CustomEditor(typeof(LevelEditor))]
@@ -34,11 +35,15 @@ public class LevelEditorInspector : Editor
 
         EditorGUILayout.Space(10);
 
-        DrawLevelSettings(levelData);
+        DrawLevelSettings(editor, levelData);
 
         EditorGUILayout.Space(10);
 
         DrawModeSelector(editor);
+
+        EditorGUILayout.Space(5);
+
+        DrawHiddenToggle(editor, levelData);
 
         EditorGUILayout.Space(5);
 
@@ -57,6 +62,27 @@ public class LevelEditorInspector : Editor
         EditorGUILayout.Space(10);
 
         validation.Draw(editor, levelData);
+
+        EditorGUILayout.Space(10);
+
+        if (editor.sourceLevel != null && GUILayout.Button("Play This Level", GUILayout.Height(30)))
+        {
+            string editorScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path;
+            PlayerData.CurrentLevel = editor.sourceLevel.levelNumber - 1;
+            EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
+            EditorSceneManager.OpenScene("Assets/Scenes/GameplayScreen.unity");
+            EditorApplication.playModeStateChanged += ReturnToEditor;
+            EditorApplication.isPlaying = true;
+
+            void ReturnToEditor(PlayModeStateChange state)
+            {
+                if (state == PlayModeStateChange.EnteredEditMode)
+                {
+                    EditorApplication.playModeStateChanged -= ReturnToEditor;
+                    EditorSceneManager.OpenScene(editorScene);
+                }
+            }
+        }
 
         if (GUI.changed)
         {
@@ -77,6 +103,7 @@ public class LevelEditorInspector : Editor
         editor.spawnerPrefab = (GameObject)EditorGUILayout.ObjectField("Spawner Prefab", editor.spawnerPrefab, typeof(GameObject), false);
         editor.gridParent = (Transform)EditorGUILayout.ObjectField("Grid Parent", editor.gridParent, typeof(Transform), true);
         editor.busSpawnOrigin = (Transform)EditorGUILayout.ObjectField("Bus Spawn Origin", editor.busSpawnOrigin, typeof(Transform), true);
+        editor.busStopParent = (Transform)EditorGUILayout.ObjectField("Bus Stop Parent", editor.busStopParent, typeof(Transform), true);
     }
 
     private bool DrawLevelSelector(LevelEditor editor)
@@ -103,12 +130,20 @@ public class LevelEditorInspector : Editor
         return true;
     }
 
-    private void DrawLevelSettings(LevelData levelData)
+    private void DrawLevelSettings(LevelEditor editor, LevelData levelData)
     {
         EditorGUILayout.LabelField("Level Settings", EditorStyles.boldLabel);
-        levelData.levelNumber = EditorGUILayout.IntField("Level Number", levelData.levelNumber);
+        EditorGUI.BeginDisabledGroup(true);
+        EditorGUILayout.IntField("Level Number", levelData.levelNumber);
+        EditorGUI.EndDisabledGroup();
         levelData.timerDuration = EditorGUILayout.FloatField("Timer (seconds)", levelData.timerDuration);
-        levelData.busStopSlotCount = EditorGUILayout.IntField("Bus Stop Slots", levelData.busStopSlotCount);
+        int prevSlots = levelData.busStopSlotCount;
+        levelData.busStopSlotCount = EditorGUILayout.IntSlider("Bus Stop Slots", levelData.busStopSlotCount, 3, 7);
+        if (levelData.busStopSlotCount != prevSlots && editor.busStopParent != null)
+        {
+            for (int i = 0; i < editor.busStopParent.childCount; i++)
+                editor.busStopParent.GetChild(i).gameObject.SetActive(i < levelData.busStopSlotCount);
+        }
     }
 
     private void DrawModeSelector(LevelEditor editor)
@@ -163,16 +198,28 @@ public class LevelEditorInspector : Editor
         GUI.backgroundColor = prevBg;
         EditorGUILayout.EndHorizontal();
 
-        // Hidden mode toggle
-        bool prevHidden = editor.hiddenMode;
-        editor.hiddenMode = EditorGUILayout.Toggle("Hidden Stickman Mode", editor.hiddenMode);
-        if (editor.hiddenMode != prevHidden)
-            editor.Visuals.UpdateHiddenStickmen();
+        // Brush type
+        editor.brushType = (LevelEditor.BrushType)EditorGUILayout.EnumPopup("Brush Type", editor.brushType);
 
         if (editor.spawnerMode)
             EditorGUILayout.HelpBox("Click empty cell to place spawner. Click existing spawner to select it.", MessageType.None);
-        if (editor.hiddenMode)
-            EditorGUILayout.HelpBox("Placed stickmen will be hidden (black) until their path opens.", MessageType.None);
+    }
+
+    private void DrawHiddenToggle(LevelEditor editor, LevelData levelData)
+    {
+        bool prev = editor.hiddenMode;
+        editor.hiddenMode = EditorGUILayout.Toggle("Hidden Stickmen", editor.hiddenMode);
+
+        if (editor.hiddenMode != prev && levelData.stickmanPlacements != null)
+        {
+            for (int i = 0; i < levelData.stickmanPlacements.Length; i++)
+            {
+                var p = levelData.stickmanPlacements[i];
+                p.isHidden = editor.hiddenMode && p.row > 0;
+                levelData.stickmanPlacements[i] = p;
+            }
+            editor.Visuals.RebuildScene();
+        }
     }
 
     private void DrawGridControls(LevelEditor editor, LevelData levelData)

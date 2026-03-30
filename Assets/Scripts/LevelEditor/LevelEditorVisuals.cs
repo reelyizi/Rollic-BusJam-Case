@@ -40,6 +40,10 @@ public class LevelEditorVisuals
         var data = editor.editData;
         if (data == null) return;
 
+        if (editor.busStopParent != null)
+            for (int i = 0; i < editor.busStopParent.childCount; i++)
+                editor.busStopParent.GetChild(i).gameObject.SetActive(i < data.busStopSlotCount);
+
         var active = new bool[LevelEditor.GridRows, LevelEditor.GridCols];
 
         if (data.activeCells != null)
@@ -55,7 +59,7 @@ public class LevelEditorVisuals
             {
                 var p = data.stickmanPlacements[i];
                 active[p.row, p.col] = true;
-                SpawnStickman(p.row, p.col, p.color, p.isHidden && editor.hiddenMode);
+                SpawnStickman(p.row, p.col, p.color, p.isHidden, p.isReserved);
             }
 
         if (data.spawnerPlacements != null)
@@ -89,7 +93,7 @@ public class LevelEditorVisuals
 
     // --- Stickman ---
 
-    public void SpawnStickman(int row, int col, StickmanColor color, bool isHidden = false)
+    public void SpawnStickman(int row, int col, StickmanColor color, bool isHidden = false, bool isReserved = false)
     {
         var key = new Vector2Int(row, col);
         DestroyIfExists(stickmen, key);
@@ -98,7 +102,7 @@ public class LevelEditorVisuals
         RemoveWall(row, col);
 
         var pos = GetCellPosition(row, col);
-        var obj = InstantiatePrefab(editor.stickmanPrefab, pos, Quaternion.Euler(0f, 180f, 0f));
+        var obj = InstantiatePrefab(editor.stickmanPrefab, pos, Quaternion.Euler(0f, 0f, 0f));
         obj.name = $"Stickman_{row}_{col}_{color}";
 
         Color renderColor;
@@ -108,6 +112,14 @@ public class LevelEditorVisuals
             renderColor = editor.colorConfig != null ? editor.colorConfig.GetRenderColor(color) : Color.white;
 
         ApplyColor(obj, renderColor);
+
+        if (isReserved)
+        {
+            var canvas = obj.GetComponentInChildren<Canvas>(true);
+            if (canvas != null)
+                canvas.gameObject.SetActive(true);
+        }
+
         stickmen[key] = obj;
     }
 
@@ -117,27 +129,6 @@ public class LevelEditorVisuals
         stickmen.Remove(new Vector2Int(row, col));
         SetCellActive(row, col, false);
         SpawnWall(row, col);
-    }
-
-    public void UpdateHiddenStickmen()
-    {
-        var data = editor.editData;
-        if (data == null || data.stickmanPlacements == null) return;
-
-        for (int i = 0; i < data.stickmanPlacements.Length; i++)
-        {
-            var p = data.stickmanPlacements[i];
-            if (!p.isHidden) continue;
-
-            var key = new Vector2Int(p.row, p.col);
-            if (!stickmen.TryGetValue(key, out var obj) || obj == null) continue;
-
-            Color color = editor.hiddenMode && editor.gameConfig != null
-                ? editor.gameConfig.hiddenStickmanColor
-                : editor.colorConfig != null ? editor.colorConfig.GetRenderColor(p.color) : Color.white;
-
-            ApplyColor(obj, color);
-        }
     }
 
     // --- Spawner ---
@@ -233,6 +224,8 @@ public class LevelEditorVisuals
             {
                 Color busColor = editor.colorConfig != null ? editor.colorConfig.GetRenderColor(def.color) : Color.white;
                 busVisual.SetColor(busColor);
+                if (def.reservedSeats > 0)
+                    busVisual.SetReservedCount(def.reservedSeats);
             }
 
             buses.Add(obj);

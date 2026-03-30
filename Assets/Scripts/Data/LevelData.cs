@@ -14,7 +14,7 @@ public class LevelData : ScriptableObject
     public SpawnerPlacement[] spawnerPlacements;
 
     [Header("Bus Stop")]
-    public int busStopSlotCount = 6;
+    public int busStopSlotCount = 7;
 
     [Header("Buses")]
     public BusDefinition[] busSequence;
@@ -57,6 +57,15 @@ public class LevelData : ScriptableObject
             if (stickmanPlacements[i].row == row && stickmanPlacements[i].col == col)
                 return stickmanPlacements[i].isHidden;
         }
+        return false;
+    }
+
+    public bool IsStickmanReserved(int row, int col)
+    {
+        if (stickmanPlacements == null) return false;
+        for (int i = 0; i < stickmanPlacements.Length; i++)
+            if (stickmanPlacements[i].row == row && stickmanPlacements[i].col == col)
+                return stickmanPlacements[i].isReserved;
         return false;
     }
 
@@ -116,6 +125,7 @@ public struct StickmanPlacement
     public int col;
     public StickmanColor color;
     public bool isHidden;
+    public bool isReserved;
 }
 
 [Serializable]
@@ -130,6 +140,7 @@ public struct BusDefinition
 {
     public StickmanColor color;
     public int capacity;
+    public int reservedSeats;
 }
 
 public enum SpawnerDirection

@@ -17,19 +17,20 @@ public class BusManager : MonoBehaviour
     private int currentBusIndex;
     private int currentBusLoaded;
     private int currentBusBoarded;
+    private int currentBusReservedLoaded;
     private bool isShifting;
     private BusStop busStop;
 
     public event Action OnAllBusesComplete;
+    public event Action OnSlotFreed;
+    public bool IsDriving => isShifting;
 
     public void Initialize(BusDefinition[] sequence, BusStop stop)
     {
         busSequence = sequence;
         busStop = stop;
         currentBusIndex = 0;
-        currentBusLoaded = 0;
-        currentBusBoarded = 0;
-        isShifting = false;
+        ResetCounters();
     }
 
     public void SpawnAllBuses()
@@ -49,7 +50,11 @@ public class BusManager : MonoBehaviour
 
             var busVisual = obj.GetComponent<BusVisual>();
             if (busVisual != null)
+            {
                 busVisual.SetColor(colorConfig.GetRenderColor(def.color));
+                if (def.reservedSeats > 0)
+                    busVisual.SetReservedCount(def.reservedSeats);
+            }
 
             activeBuses.Add(obj);
         }
@@ -57,38 +62,84 @@ public class BusManager : MonoBehaviour
 
     public void OnPassengerArrived(Stickman stickman)
     {
-        if (isShifting || !HasCurrentBus()) return;
+        if (isShifting || !HasCurrentBus())
+        {
+            StartCoroutine(RetryAfterShift(stickman));
+            return;
+        }
 
-        if (stickman.Color == busSequence[currentBusIndex].color)
-            SendToBus(stickman);
+        TryBoardStickman(stickman);
+    }
+
+    private System.Collections.IEnumerator RetryAfterShift(Stickman stickman)
+    {
+        while (isShifting)
+            yield return null;
+
+        if (HasCurrentBus())
+            TryBoardStickman(stickman);
+    }
+
+    private void TryBoardStickman(Stickman stickman)
+    {
+        if (!HasCurrentBus()) return;
+
+        var def = busSequence[currentBusIndex];
+        if (stickman.Color != def.color) return;
+
+        if (stickman.IsReserved)
+        {
+            if (currentBusReservedLoaded < def.reservedSeats)
+                SendToBus(stickman, true);
+        }
+        else
+        {
+            int normalCapacity = def.capacity - def.reservedSeats;
+            int normalLoaded = currentBusLoaded - currentBusReservedLoaded;
+            if (normalLoaded < normalCapacity)
+                SendToBus(stickman, false);
+        }
     }
 
     private void CheckWaitingPassengers()
     {
         if (!HasCurrentBus()) return;
 
-        var busColor = busSequence[currentBusIndex].color;
-        int capacity = busSequence[currentBusIndex].capacity;
+        var def = busSequence[currentBusIndex];
 
-        while (currentBusLoaded < capacity)
+        while (currentBusReservedLoaded < def.reservedSeats)
         {
-            var match = busStop.GetFirstMatchingPassenger(busColor);
+            var match = busStop.GetFirstMatchingPassenger(def.color, true);
             if (match == null) break;
+            SendToBus(match, true);
+        }
 
-            SendToBus(match);
+        int normalCapacity = def.capacity - def.reservedSeats;
+        int normalLoaded = currentBusLoaded - currentBusReservedLoaded;
+        while (normalLoaded < normalCapacity)
+        {
+            var match = busStop.GetFirstMatchingPassenger(def.color, false);
+            if (match == null) break;
+            SendToBus(match, false);
+            normalLoaded++;
         }
     }
 
-    private void SendToBus(Stickman stickman)
+    private void SendToBus(Stickman stickman, bool isReservedSeat)
     {
-        busStop.RemovePassenger(stickman);
+        busStop.MarkBoarding(stickman);
         currentBusLoaded++;
+        if (isReservedSeat)
+            currentBusReservedLoaded++;
 
         var currentBus = activeBuses[0];
         Vector3 busPos = currentBus.transform.position;
 
         stickman.BoardBus(busPos, () =>
         {
+            busStop.ClearSlot(stickman);
+            OnSlotFreed?.Invoke();
+
             var busVisual = currentBus.GetComponent<BusVisual>();
             if (busVisual != null)
                 busVisual.ShowNextPassenger(colorConfig.GetRenderColor(stickman.Color));
@@ -96,8 +147,7 @@ public class BusManager : MonoBehaviour
             stickman.gameObject.SetActive(false);
             currentBusBoarded++;
 
-            int capacity = busSequence[currentBusIndex].capacity;
-            if (currentBusBoarded >= capacity)
+            if (currentBusBoarded >= busSequence[currentBusIndex].capacity)
                 StartCoroutine(DriveAwayAndShift());
         });
     }
@@ -105,6 +155,14 @@ public class BusManager : MonoBehaviour
     private bool HasCurrentBus()
     {
         return currentBusIndex < busSequence.Length && activeBuses.Count > 0;
+    }
+
+    private void ResetCounters()
+    {
+        currentBusLoaded = 0;
+        currentBusBoarded = 0;
+        currentBusReservedLoaded = 0;
+        isShifting = false;
     }
 
     private IEnumerator DriveAwayAndShift()
@@ -115,8 +173,7 @@ public class BusManager : MonoBehaviour
         activeBuses.RemoveAt(0);
 
         currentBusIndex++;
-        currentBusLoaded = 0;
-        currentBusBoarded = 0;
+        ResetCounters();
 
         StartCoroutine(DriveOut(departing));
 

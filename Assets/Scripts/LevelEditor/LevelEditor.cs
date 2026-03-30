@@ -20,11 +20,15 @@ public class LevelEditor : MonoBehaviour
     [Header("Scene References")]
     public Transform gridParent;
     public Transform busSpawnOrigin;
+    public Transform busStopParent;
+
+    public enum BrushType { Normal, Reserved }
 
     [HideInInspector] public StickmanColor selectedColor = StickmanColor.Red;
+    [HideInInspector] public BrushType brushType = BrushType.Normal;
+    [HideInInspector] public bool hiddenMode;
     [HideInInspector] public bool pathMode;
     [HideInInspector] public bool spawnerMode;
-    [HideInInspector] public bool hiddenMode;
     [HideInInspector] public Vector2Int selectedSpawnerCell = new(-1, -1);
     [HideInInspector] public LevelData editData;
 
@@ -50,11 +54,23 @@ public class LevelEditor : MonoBehaviour
 
     public void SaveLevel()
     {
-        if (sourceLevel == null || editData == null) return;
-
-        LevelDataCopier.Copy(editData, sourceLevel);
+        if (editData == null) return;
 
 #if UNITY_EDITOR
+        if (sourceLevel == null)
+        {
+            string path = $"Assets/Resources/LevelData/{editData.name}.asset";
+            var asset = ScriptableObject.CreateInstance<LevelData>();
+            LevelDataCopier.Copy(editData, asset);
+            UnityEditor.AssetDatabase.CreateAsset(asset, path);
+            sourceLevel = asset;
+            Debug.Log($"[LevelEditor] Created {path}");
+        }
+        else
+        {
+            LevelDataCopier.Copy(editData, sourceLevel);
+        }
+
         UnityEditor.EditorUtility.SetDirty(sourceLevel);
         UnityEditor.AssetDatabase.SaveAssets();
         Debug.Log($"[LevelEditor] Saved {sourceLevel.name}");

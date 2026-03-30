@@ -11,8 +11,8 @@ public class GameplayManager : MonoBehaviour
     [SerializeField] private BusManager busManager;
     [SerializeField] private InputHandler inputHandler;
     [SerializeField] private TimerDisplay timerDisplay;
-    [SerializeField] private LevelData levelData;
     [SerializeField] private ColorConfig colorConfig;
+    [SerializeField] private float winDelay = 2f;
 
     [Header("UI")]
     [SerializeField] private GameObject tapToStartOverlay;
@@ -21,13 +21,25 @@ public class GameplayManager : MonoBehaviour
 
     private PlayState state;
     private readonly List<Stickman> movingStickmen = new();
+    private LevelData levelData;
 
     private void Start()
     {
+        int levelIndex = PlayerData.CurrentLevel;
+        int levelNumber = levelIndex + 1;
+        string path = $"LevelData/Level_{levelNumber:D2}";
+        levelData = Resources.Load<LevelData>(path);
+
         if (levelData == null)
         {
-            Debug.LogError("[GameplayManager] No level data assigned!");
-            return;
+            PlayerData.CurrentLevel = 0;
+            levelData = Resources.Load<LevelData>("LevelData/Level_01");
+
+            if (levelData == null)
+            {
+                Debug.LogError("[GameplayManager] No levels found!");
+                return;
+            }
         }
 
         gridManager.Initialize(levelData, colorConfig);
@@ -35,12 +47,14 @@ public class GameplayManager : MonoBehaviour
         busManager.Initialize(levelData.busSequence, busStop);
         busManager.SpawnAllBuses();
 
-        if (SaveManager.Instance != null)
-            SaveManager.Instance.Data.timerRemaining = levelData.timerDuration;
+        if (timerDisplay != null)
+            timerDisplay.SetTime(levelData.timerDuration);
 
         gridManager.RefreshAllPaths();
 
         inputHandler.OnStickmanTapped += HandleStickmanTapped;
+        busManager.OnAllBusesComplete += CheckWinCondition;
+        busManager.OnSlotFreed += ProcessWaitingStickmen;
         inputHandler.SetEnabled(false);
 
         state = PlayState.PreGame;
@@ -60,7 +74,10 @@ public class GameplayManager : MonoBehaviour
 
         if (state == PlayState.Playing)
         {
-            if (SaveManager.Instance != null && SaveManager.Instance.Data.timerRemaining <= 0f)
+            if (timerDisplay != null && timerDisplay.IsTimeUp)
+                OnLose();
+
+            if (busStop.IsFull && movingStickmen.Count == 0 && !busManager.IsDriving)
                 OnLose();
         }
     }
@@ -69,6 +86,9 @@ public class GameplayManager : MonoBehaviour
     {
         state = PlayState.Playing;
         inputHandler.SetEnabled(true);
+
+        if (timerDisplay != null)
+            timerDisplay.StartTimer();
 
         if (tapToStartOverlay != null) tapToStartOverlay.SetActive(false);
 
@@ -159,14 +179,25 @@ public class GameplayManager : MonoBehaviour
         state = PlayState.Won;
         inputHandler.SetEnabled(false);
 
-        if (SaveManager.Instance != null)
-        {
-            SaveManager.Instance.Data.currentLevel++;
-            SaveManager.Instance.ForceSave();
-        }
+        if (timerDisplay != null)
+            timerDisplay.StopTimer();
+
+        PlayerData.CurrentLevel++;
 
         if (winPanel != null) winPanel.SetActive(true);
         Debug.Log("[GameplayManager] Level Complete!");
+
+        StartCoroutine(LoadMenuAfterDelay());
+    }
+
+    private System.Collections.IEnumerator LoadMenuAfterDelay()
+    {
+        yield return new WaitForSeconds(winDelay);
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.LoadMenuScreen();
+        else
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MenuScreen");
     }
 
     private void OnLose()
@@ -176,8 +207,20 @@ public class GameplayManager : MonoBehaviour
         state = PlayState.Lost;
         inputHandler.SetEnabled(false);
 
+        if (timerDisplay != null)
+            timerDisplay.StopTimer();
+
         if (losePanel != null) losePanel.SetActive(true);
         Debug.LogWarning("[GameplayManager] Game Over!");
+
+        StartCoroutine(RestartAfterDelay());
+    }
+
+    private System.Collections.IEnumerator RestartAfterDelay()
+    {
+        yield return new WaitForSeconds(winDelay);
+        UnityEngine.SceneManagement.SceneManager.LoadScene(
+            UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
     }
 
     private void OnDestroy()

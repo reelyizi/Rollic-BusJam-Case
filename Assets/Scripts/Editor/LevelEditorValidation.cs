@@ -22,6 +22,7 @@ public class LevelEditorValidation
 
         ValidateCounts(stickmanCount, busCount, totalBusCapacity);
         ValidateColors(colorCounts, busCapacityPerColor);
+        ValidateReserved(levelData);
         ValidateSpawnersAndPaths(levelData, stickmanCount);
 
         if (isValid)
@@ -92,6 +93,65 @@ public class LevelEditorValidation
             if (!colorCounts.ContainsKey(kvp.Key))
             {
                 EditorGUILayout.HelpBox($"{kvp.Key}: bus exists but no stickmen!", MessageType.Warning);
+                isValid = false;
+            }
+        }
+    }
+
+    private void ValidateReserved(LevelData levelData)
+    {
+        // Validate reservedSeats doesn't exceed capacity
+        if (levelData.busSequence != null)
+        {
+            for (int i = 0; i < levelData.busSequence.Length; i++)
+            {
+                if (levelData.busSequence[i].reservedSeats > levelData.busSequence[i].capacity)
+                {
+                    EditorGUILayout.HelpBox(
+                        $"Bus {i + 1}: reserved seats ({levelData.busSequence[i].reservedSeats}) exceeds capacity ({levelData.busSequence[i].capacity})!",
+                        MessageType.Error);
+                    isValid = false;
+                }
+            }
+        }
+
+        var reservedPerColor = new Dictionary<StickmanColor, int>();
+        var reservedSeatsPerColor = new Dictionary<StickmanColor, int>();
+
+        if (levelData.stickmanPlacements != null)
+            for (int i = 0; i < levelData.stickmanPlacements.Length; i++)
+                if (levelData.stickmanPlacements[i].isReserved)
+                    Increment(reservedPerColor, levelData.stickmanPlacements[i].color);
+
+        if (levelData.busSequence != null)
+            for (int i = 0; i < levelData.busSequence.Length; i++)
+                if (levelData.busSequence[i].reservedSeats > 0)
+                {
+                    if (!reservedSeatsPerColor.ContainsKey(levelData.busSequence[i].color))
+                        reservedSeatsPerColor[levelData.busSequence[i].color] = 0;
+                    reservedSeatsPerColor[levelData.busSequence[i].color] += levelData.busSequence[i].reservedSeats;
+                }
+
+        foreach (var kvp in reservedPerColor)
+        {
+            reservedSeatsPerColor.TryGetValue(kvp.Key, out int seats);
+            if (seats == 0)
+            {
+                EditorGUILayout.HelpBox($"{kvp.Key}: {kvp.Value} reserved stickmen but no reserved bus seats!", MessageType.Error);
+                isValid = false;
+            }
+            else if (kvp.Value != seats)
+            {
+                EditorGUILayout.HelpBox($"{kvp.Key}: {kvp.Value} reserved stickmen but {seats} reserved seats.", MessageType.Error);
+                isValid = false;
+            }
+        }
+
+        foreach (var kvp in reservedSeatsPerColor)
+        {
+            if (!reservedPerColor.ContainsKey(kvp.Key))
+            {
+                EditorGUILayout.HelpBox($"{kvp.Key}: {kvp.Value} reserved bus seats but no reserved stickmen!", MessageType.Warning);
                 isValid = false;
             }
         }

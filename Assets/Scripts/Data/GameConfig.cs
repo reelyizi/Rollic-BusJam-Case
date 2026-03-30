@@ -5,7 +5,7 @@ public class GameConfig : ScriptableObject
 {
     [Header("Defaults")]
     public int startingCoins = 200;
-    public int startingLevel = 1;
+    public int startingLevel = 0;
 
     [Header("Bus")]
     public float busGap = 2f;

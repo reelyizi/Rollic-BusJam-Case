@@ -9,7 +9,7 @@ public class LoadingScreen : MonoBehaviour
     {
         float startTime = Time.realtimeSinceStartup;
 
-        var asyncOp = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("StartScreen");
+        var asyncOp = UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("MenuScreen");
         asyncOp.allowSceneActivation = false;
 
         while (asyncOp.progress < 0.9f)

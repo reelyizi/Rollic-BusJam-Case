@@ -44,6 +44,14 @@ public class LevelEditorBusDrawer
         levelData.busSequence[i].capacity = 3;
         EditorGUILayout.LabelField("x3", EditorStyles.boldLabel, GUILayout.Width(25));
 
+        EditorGUILayout.LabelField("R:", GUILayout.Width(15));
+        int prevReserved = levelData.busSequence[i].reservedSeats;
+        levelData.busSequence[i].reservedSeats = EditorGUILayout.IntField(
+            levelData.busSequence[i].reservedSeats, GUILayout.Width(25));
+        levelData.busSequence[i].reservedSeats = Mathf.Clamp(levelData.busSequence[i].reservedSeats, 0, 3);
+        if (levelData.busSequence[i].reservedSeats != prevReserved)
+            editor.Visuals.RebuildBuses();
+
         if (GUILayout.Button("\u25b2", GUILayout.Width(22)) && i > 0)
         {
             (levelData.busSequence[i], levelData.busSequence[i - 1]) =

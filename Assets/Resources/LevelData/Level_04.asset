@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c6b4cc3f31c95d4aa6c43acc630f71f, type: 3}
+  m_Name: Level_04
+  m_EditorClassIdentifier: 
+  levelNumber: 4
+  gridRows: 8
+  gridCols: 8
+  stickmanPlacements:
+  - row: 2
+    col: 3
+    color: 3
+    isHidden: 0
+    isReserved: 0
+  - row: 2
+    col: 2
+    color: 3
+    isHidden: 0
+    isReserved: 0
+  - row: 2
+    col: 4
+    color: 5
+    isHidden: 0
+    isReserved: 0
+  - row: 2
+    col: 5
+    color: 5
+    isHidden: 0
+    isReserved: 0
+  - row: 3
+    col: 5
+    color: 5
+    isHidden: 0
+    isReserved: 0
+  - row: 3
+    col: 4
+    color: 3
+    isHidden: 0
+    isReserved: 0
+  activeCells:
+  - row: 1
+    col: 2
+  - row: 1
+    col: 3
+  - row: 1
+    col: 4
+  - row: 1
+    col: 5
+  - row: 0
+    col: 3
+  - row: 0
+    col: 4
+  spawnerPlacements:
+  - row: 1
+    col: 1
+    direction: 3
+    colorQueue: 010000000100000000000000
+  - row: 1
+    col: 6
+    direction: 2
+    colorQueue: 000000000000000001000000
+  busStopSlotCount: 7
+  busSequence:
+  - color: 5
+    capacity: 3
+    reservedSeats: 0
+  - color: 0
+    capacity: 3
+    reservedSeats: 0
+  - color: 3
+    capacity: 3
+    reservedSeats: 0
+  - color: 1
+    capacity: 3
+    reservedSeats: 0
+  timerDuration: 120

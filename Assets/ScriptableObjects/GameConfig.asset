@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: GameConfig
   m_EditorClassIdentifier: 
   startingCoins: 200
-  startingLevel: 1
+  startingLevel: 0
   busGap: 19
   wallYOffset: -0.4
   spawnerYOffset: -1
