@@ -92,4 +92,4 @@ MonoBehaviour:
   - color: 3
     capacity: 3
     reservedSeats: 0
-  timerDuration: 5
+  timerDuration: 30

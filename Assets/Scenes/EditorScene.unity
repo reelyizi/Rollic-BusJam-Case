@@ -204,7 +204,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -261,12 +261,12 @@ MonoBehaviour:
   busSpawnOrigin: {fileID: 666142512}
   busStopParent: {fileID: 847720844}
   selectedColor: 3
-  brushType: 0
-  hiddenMode: 1
+  brushType: 1
+  hiddenMode: 0
   pathMode: 0
   spawnerMode: 0
-  selectedSpawnerCell: {x: -1, y: -1}
-  editData: {fileID: 1985651502}
+  selectedSpawnerCell: {x: 1, y: 6}
+  editData: {fileID: 2012329029}
 --- !u!4 &35854861
 Transform:
   m_ObjectHideFlags: 0
@@ -457,7 +457,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -739,7 +739,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -927,7 +927,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1491,7 +1491,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1585,7 +1585,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2684,7 +2684,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3966,7 +3966,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4902,7 +4902,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -6213,7 +6213,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -6401,7 +6401,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -6495,7 +6495,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -6508,45 +6508,6 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1961428660}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1985651502
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6c6b4cc3f31c95d4aa6c43acc630f71f, type: 3}
-  m_Name: Level_04
-  m_EditorClassIdentifier: 
-  levelNumber: 4
-  gridRows: 8
-  gridCols: 8
-  stickmanPlacements:
-  - row: 0
-    col: 4
-    color: 3
-    isHidden: 0
-    isReserved: 0
-  - row: 0
-    col: 3
-    color: 3
-    isHidden: 0
-    isReserved: 0
-  - row: 0
-    col: 2
-    color: 3
-    isHidden: 0
-    isReserved: 0
-  activeCells: []
-  spawnerPlacements: []
-  busStopSlotCount: 7
-  busSequence:
-  - color: 3
-    capacity: 3
-    reservedSeats: 0
-  timerDuration: 120
 --- !u!1001 &2003956656
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6641,6 +6602,89 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 2003956656}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2012329029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c6b4cc3f31c95d4aa6c43acc630f71f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  levelNumber: 4
+  gridRows: 8
+  gridCols: 8
+  stickmanPlacements:
+  - row: 2
+    col: 3
+    color: 3
+    isHidden: 0
+    isReserved: 0
+  - row: 2
+    col: 2
+    color: 3
+    isHidden: 0
+    isReserved: 0
+  - row: 2
+    col: 4
+    color: 5
+    isHidden: 0
+    isReserved: 0
+  - row: 2
+    col: 5
+    color: 5
+    isHidden: 0
+    isReserved: 0
+  - row: 3
+    col: 5
+    color: 5
+    isHidden: 0
+    isReserved: 0
+  - row: 3
+    col: 4
+    color: 3
+    isHidden: 0
+    isReserved: 0
+  activeCells:
+  - row: 1
+    col: 2
+  - row: 1
+    col: 3
+  - row: 1
+    col: 4
+  - row: 1
+    col: 5
+  - row: 0
+    col: 3
+  - row: 0
+    col: 4
+  spawnerPlacements:
+  - row: 1
+    col: 1
+    direction: 3
+    colorQueue: 010000000100000000000000
+  - row: 1
+    col: 6
+    direction: 2
+    colorQueue: 000000000000000001000000
+  busStopSlotCount: 7
+  busSequence:
+  - color: 5
+    capacity: 3
+    reservedSeats: 0
+  - color: 0
+    capacity: 3
+    reservedSeats: 0
+  - color: 3
+    capacity: 3
+    reservedSeats: 0
+  - color: 1
+    capacity: 3
+    reservedSeats: 0
+  timerDuration: 120
 --- !u!1 &2014667424
 GameObject:
   m_ObjectHideFlags: 0
@@ -6922,7 +6966,7 @@ PrefabInstance:
     - target: {fileID: 7748165123714047614, guid: ebe31b7858d34c2499d72dbc9e894efb,
         type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

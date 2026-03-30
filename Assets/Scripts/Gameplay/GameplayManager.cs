@@ -185,19 +185,6 @@ public class GameplayManager : MonoBehaviour
         PlayerData.CurrentLevel++;
 
         if (winPanel != null) winPanel.SetActive(true);
-        Debug.Log("[GameplayManager] Level Complete!");
-
-        StartCoroutine(LoadMenuAfterDelay());
-    }
-
-    private System.Collections.IEnumerator LoadMenuAfterDelay()
-    {
-        yield return new WaitForSeconds(winDelay);
-
-        if (GameManager.Instance != null)
-            GameManager.Instance.LoadMenuScreen();
-        else
-            UnityEngine.SceneManagement.SceneManager.LoadScene("MenuScreen");
     }
 
     private void OnLose()
@@ -211,14 +198,18 @@ public class GameplayManager : MonoBehaviour
             timerDisplay.StopTimer();
 
         if (losePanel != null) losePanel.SetActive(true);
-        Debug.LogWarning("[GameplayManager] Game Over!");
-
-        StartCoroutine(RestartAfterDelay());
     }
 
-    private System.Collections.IEnumerator RestartAfterDelay()
+    public void ContinueToMenu()
     {
-        yield return new WaitForSeconds(winDelay);
+        if (GameManager.Instance != null)
+            GameManager.Instance.LoadMenuScreen();
+        else
+            UnityEngine.SceneManagement.SceneManager.LoadScene("MenuScreen");
+    }
+
+    public void RestartLevel()
+    {
         UnityEngine.SceneManagement.SceneManager.LoadScene(
             UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
     }
