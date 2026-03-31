@@ -10,28 +10,6 @@ A Bus Jam clone built in Unity 2022.3.19f1 for Rollic's Game Developer case stud
 4. Stickmen board buses that match their color
 5. Clear all stickmen to complete the level
 
-## Project Structure
-
-```
-Assets/
-├── Resources/LevelData/     Level ScriptableObjects (Level_01, Level_02, etc.)
-├── Scenes/
-│   ├── MenuScreen           Start/home screen
-│   ├── GameplayScreen       Main gameplay
-│   └── EditorScene          Level editor
-├── Scripts/
-│   ├── Core/                Singleton, GameManager, ObjectPool
-│   ├── Data/                LevelData, PlayerData, ColorConfig, GameConfig
-│   ├── Gameplay/            GridManager, BusManager, Stickman, PathFinder, etc.
-│   ├── LevelEditor/         LevelEditor, LevelEditorVisuals, LevelDataCopier
-│   ├── Editor/              Custom inspectors, drawers, validation
-│   ├── Environment/         WorldCurver, EnvironmentScroller, BusBounce
-│   └── UI/                  TimerDisplay, BottomNavBar, SafeAreaHandler, etc.
-├── Prefabs/
-├── Shaders/                 Curved world shaders
-└── Art/                     Models, materials, textures
-```
-
 ## Architecture
 
 ### Screens
@@ -44,19 +22,6 @@ Assets/
 MenuScreen → GameplayScreen → Win → MenuScreen (next level)
                              → Lose → Restart same level
 ```
-
-### Core Systems
-
-| System | Description |
-|--------|-------------|
-| **GridManager** | Manages 8x8 grid, stickman spawning, cell occupancy |
-| **PathFinder** | BFS pathfinding (4 directions) to find routes to top row |
-| **BusManager** | Bus queue, passenger boarding, departure, shifting |
-| **BusStop** | Waiting slots with boarding state tracking |
-| **InputHandler** | Raycast-based tap detection on stickmen |
-| **GameplayManager** | Orchestrates gameplay states (PreGame, Playing, Won, Lost) |
-| **ObjectPool** | Generic object pooling for stickmen and buses |
-
 ### Level Data
 Levels are ScriptableObjects stored in `Resources/LevelData/`. Each level contains:
 - Grid cell placements (stickmen positions and colors)
@@ -124,10 +89,6 @@ Levels are ScriptableObjects stored in `Resources/LevelData/`. Each level contai
 - **Hidden Stickmen** - Appear black until their path to top row opens
 - **Reserved System** - Reserved stickmen can only board reserved bus seats
 - **Spawners** - Objects that auto-spawn stickmen when the adjacent cell is empty
-
-## Build Settings
-- Index 0: MenuScreen
-- Index 1: GameplayScreen
 
 ## Screenshots
 
